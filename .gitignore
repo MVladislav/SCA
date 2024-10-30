@@ -1,0 +1,22 @@
+# Ignore .hidden files
+.*
+# Ignore everything
+*
+
+!.github/
+!.github/**
+
+!.dockerignore
+!.gitattributes
+!.gitignore
+!.gitempty
+
+!LICENSE
+!SECURITY.md
+
+!README.md
+
+!.pre-commit-config.yaml
+!.gitleaks.toml
+!.prettierrc.yml
+!.yamllint
