@@ -20,3 +20,6 @@
 !.gitleaks.toml
 !.prettierrc.yml
 !.yamllint
+
+!sca.sh
+!cis_ubuntu24-04.yml
