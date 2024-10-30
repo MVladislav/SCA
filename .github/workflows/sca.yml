@@ -47,7 +47,7 @@ jobs:
 
       - name: Run script
         run: |
-          sudo bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml > report.log 2>&1
+          sudo bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml 2>&1 | tee script_output.txt
 
       - name: Upload output as artifact
         uses: actions/upload-artifact@v4
