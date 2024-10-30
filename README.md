@@ -34,7 +34,7 @@ Examples how to run the script:
 
 ```sh
 # Run all sca rules with file './cis_ubuntu24-04.yml'
-$bash ./sca.sh -soc -pdc
+$bash ./sca.sh -pdc
 
 # Get help info
 $bash ./sca.sh -h

@@ -42,7 +42,9 @@ jobs:
           # rm -rf wazuh-manager*
           echo 'Make wazuh-regex executable'
           chmod u+x wazuh-regex
+          echo 'Install dependencies yq + jq'
+          apt install -y yq jq
 
       - name: Run script
         run: |
-          bash ./sca.sh -soc -pdc -f ./cis_ubuntu24-04.yml
+          bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml
