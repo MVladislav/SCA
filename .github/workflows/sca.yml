@@ -45,4 +45,4 @@ jobs:
 
       - name: Run script
         run: |
-          bash ./sca.sh -soc -pdc
+          bash ./sca.sh -soc -pdc -f ./cis_ubuntu24-04.yml
