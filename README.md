@@ -6,8 +6,10 @@
 
 ---
 
-- [TEMPLATE](#template)
-  - [start here](#start-here)
+- [SCA Tooling](#sca-tooling)
+  - [Test Script to run Wazuh-SCA-YAML files](#test-script-to-run-wazuh-sca-yaml-files)
+  - [Download other SCA-YAML files](#download-other-sca-yaml-files)
+  - [SCA :: in work :: CIS Ubuntu 24.04](#sca--in-work--cis-ubuntu-2404)
   - [License](#license)
   - [References](#references)
 
@@ -47,6 +49,16 @@ $bash ./sca.sh -soc -pdc -i <ID>
 $wget -O ./cis_ubuntu22-04.yml \
 https://raw.githubusercontent.com/wazuh/wazuh/refs/heads/master/ruleset/sca/ubuntu/cis_ubuntu22-04.yml
 ```
+
+## SCA :: in work :: CIS Ubuntu 24.04
+
+- [x] Section1 (66)
+- [x] Section2 (43)
+- [x] Section3 (18)
+- [x] Section4 (29)
+- [ ] Section5 (71)
+- [ ] Section6 (62)
+- [ ] Section7 (23)
 
 ---
 
