@@ -38,13 +38,19 @@ jobs:
           cp ./wazuh-manager/var/ossec/bin/wazuh-regex .
           echo 'Copy needed libs'
           mkdir -p ./wazuh-lib && cp -r ./wazuh-manager/var/ossec/lib/* ./wazuh-lib
-          # echo 'Removed not needed files'
-          # rm -rf wazuh-manager*
+          echo 'Removed not needed files'
+          sudo rm -rf wazuh-manager*
           echo 'Make wazuh-regex executable'
           chmod u+x wazuh-regex
           echo 'Install dependencies yq + jq'
-          apt install -y yq jq
+          sudo apt install -y yq jq
 
       - name: Run script
         run: |
-          bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml
+          sudo bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml > report.log 2>&1
+
+      - name: Upload output as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-result
+          path: report.log
