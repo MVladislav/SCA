@@ -30,11 +30,17 @@ jobs:
 
       - name: Install dependencies
         run: |
-          wget https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-manager/wazuh-manager_4.9.1-1_amd64.deb
-          mkdir wazuh-manager && dpkg-deb -R wazuh-manager_4.9.1-1_amd64.deb wazuh-manager
+          echo 'Download wazuh-manager.deb ...'
+          wget -q -O ./wazuh-manager.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-manager/wazuh-manager_4.9.1-1_amd64.deb
+          echo 'Extract wazuh-manager.deb'
+          mkdir -p ./wazuh-manager && dpkg-deb -R ./wazuh-manager.deb ./wazuh-manager
+          echo 'Copy wazuh-regex'
           cp ./wazuh-manager/var/ossec/bin/wazuh-regex .
-          mkdir wazuh-lib && cp -r ./wazuh-manager/var/ossec/lib/* ./wazuh-lib
-          rm wazuh-manager* -rf
+          echo 'Copy needed libs'
+          mkdir -p ./wazuh-lib && cp -r ./wazuh-manager/var/ossec/lib/* ./wazuh-lib
+          # echo 'Removed not needed files'
+          # rm -rf wazuh-manager*
+          echo 'Make wazuh-regex executable'
           chmod u+x wazuh-regex
 
       - name: Run script
