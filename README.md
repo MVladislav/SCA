@@ -56,7 +56,7 @@ https://raw.githubusercontent.com/wazuh/wazuh/refs/heads/master/ruleset/sca/ubun
 - [x] Section2 (43)
 - [x] Section3 (18)
 - [x] Section4 (29)
-- [ ] Section5 (71)
+- [x] Section5 (71)
 - [ ] Section6 (62)
 - [ ] Section7 (23)
 
@@ -70,6 +70,7 @@ MIT
 
 - <https://github.com/MVladislav/ansible-cis-ubuntu-2404>
 - <https://gist.github.com/MVladislav/b186d7dc6f151301cdd7b3943993d47c>
+- <https://github.com/wazuh/wazuh/blob/enhancement/23194-create-sca-policy-for-ubuntu-24-04-lts/ruleset/sca/ubuntu/cis_ubuntu24-04.yml>
 - Wazuh Docs
   - <https://documentation.wazuh.com/current/user-manual/capabilities/sec-config-assessment/creating-custom-policies.html>
   - <https://github.com/wazuh/wazuh/blob/enhancement/23194-create-sca-policy-for-ubuntu-24-04-lts/ruleset/sca/ubuntu/cis_ubuntu24-04.yml>

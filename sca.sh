@@ -131,7 +131,11 @@ run_check() {
     output=$(eval "cat ${type_part#f:}" 2>&1)
     ;;
   c:*)
-    output=$(eval "${type_part#c:}" 2>&1)
+    local command="${type_part#c:}"
+    command="${command//\\\"/\"}" # Remove backslash before double quotes
+    command="${command//\\\'/\'}" # Remove backslash before double quotes
+    command="${command//\\\\/\\}" # Remove double backslashes
+    output=$(eval "$command" 2>&1)
     ;;
   p:*)
     # NOTE: not tested
@@ -268,6 +272,7 @@ process_file_check() {
     esac
 
     match_output=$(echo "$output_result" | LD_LIBRARY_PATH="$LD_LIBRARY_PATH" "$WAZUH_REGEX_PATH" "$regex" 2>&1)
+    match_output=$(echo "$match_output" | sed -E 's/^\+OS(Match_Compile|_Match2)[[:space:]]*:[[:space:]]*//')
 
     if [[ -n "$match_output" ]]; then
       if [[ -n "$compare" && -n "$verify" ]]; then

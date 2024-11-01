@@ -1326,8 +1326,8 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: any
     rules:
-      - 'c:stat /boot/grub/grub.cfg -> r:Access: \(0600/-r--------\) && r:Uid:\s+\(\s*\t*0/\s*\t*root\)\s*\t*Gid:\s+\t*\(\s*\t*0/\s*\t*root\)'
-      - 'c:stat /boot/grub/grub.cfg -> r:Access: \(0400/-r--------\) && r:Uid:\s+\(\s*\t*0/\s*\t*root\)\s*\t*Gid:\s+\t*\(\s*\t*0/\s*\t*root\)'
+      - 'c:stat /boot/grub/grub.cfg -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*\t*Gid:\s*\(\s*0/\s*root\)'
+      - 'c:stat /boot/grub/grub.cfg -> r:Access:\s*\(0400/-r--------\)\s*Uid:\s*\(\s*0/\s*root\)\s*\t*Gid:\s*\(\s*0/\s*root\)'
 
   # 1.5.1 Ensure address space layout randomization is enabled. (Automated)
   - id: 18544
@@ -1688,8 +1688,7 @@ checks:
     condition: all
     rules:
       - d:/etc/dconf/db/local.d -> r:\. -> r:^[org/gnome/desktop/session]
-      - d:/etc/dconf/db/local.d -> r:\. -> n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare <= 900
-      - d:/etc/dconf/db/local.d -> r:\. -> n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare > 0
+      - d:/etc/dconf/db/local.d -> r:\. -> n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare <= 900 && n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare > 0
       - d:/etc/dconf/db/local.d -> r:\. -> r:^[org/gnome/desktop/screensaver]
       - d:/etc/dconf/db/local.d -> r:\. -> n:^lock-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare <= 5
 
@@ -2529,8 +2528,8 @@ checks:
       - soc_2: ["CC4.1", "CC5.2"]
     condition: all
     rules:
-      - "c:systemctl show chrony.service systemd-timesyncd.service | grep -cE '^ActiveState=active' -> n:^(\\d+) compare == 1"
-      - "c:systemctl show chrony.service systemd-timesyncd.service | grep -cE '^LoadState=loaded' -> n:^(\\d+) compare == 1"
+      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare == 1'
+      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare == 1'
 
   # 2.3.2.1 Ensure systemd-timesyncd configured with authorized timeserver. (Automated)
   - id: 18594
@@ -3402,8 +3401,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: all
     rules:
-      - "c:systemctl show ufw.service nft.service iptables.service | grep -cE '^ActiveState=active' -> n:^(\\d+) compare == 1"
-      - "c:systemctl show ufw.service nft.service iptables.service | grep -cE '^LoadState=loaded' -> n:^(\\d+) compare == 1"
+      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare == 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare == 1'
 
   # 4.2.1 Ensure ufw is installed. (Automated)
   - id: 18627
@@ -3634,8 +3633,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - "c:systemctl show ufw.service nft.service | grep -cE '^ActiveState=active' -> n:^(\\d+) compare <= 1"
-      - "c:systemctl show ufw.service nft.service | grep -cE '^LoadState=loaded' -> n:^(\\d+) compare <= 1"
+      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
 
   # # 4.3.3 Ensure iptables are flushed with nftables. (Manual) - Not implemented
   # - id: 18636
@@ -3889,8 +3888,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - "c:systemctl show nft.service iptables.service | grep -cE '^ActiveState=active' -> n:^(\\d+) compare <= 1"
-      - "c:systemctl show nft.service iptables.service | grep -cE '^LoadState=loaded' -> n:^(\\d+) compare <= 1"
+      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
 
   # 4.4.1.3 Ensure ufw is not in use with iptables. (Automated)
   - id: 18646
@@ -3913,8 +3912,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - "c:systemctl show ufw.service iptables.service | grep -cE '^ActiveState=active' -> n:^(\\d+) compare <= 1"
-      - "c:systemctl show ufw.service iptables.service | grep -cE '^LoadState=loaded' -> n:^(\\d+) compare <= 1"
+      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
 
   # 4.4.2.1 Ensure iptables default deny firewall policy. (Automated)
   - id: 18647
@@ -4139,8 +4138,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:stat /etc/ssh/sshd_config -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*\t*Gid:\s*\(\s*0/\s*root\)'
 
   # 5.1.2 Ensure permissions on SSH private host key files are configured. (Automated)
   - id: 18656
@@ -4169,8 +4169,11 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0600'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
 
   # 5.1.3 Ensure permissions on SSH public host key files are configured. (Automated)
   - id: 18657
@@ -4199,8 +4202,11 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0644'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
 
   # 5.1.4 Ensure sshd access is configured. (Automated)
   - id: 18658
@@ -4229,8 +4235,11 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - 'c:sshd -T -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
+      - 'f:/etc/ssh/sshd_config -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
+      - 'd:/etc/ssh/sshd_config.d -> r:\.* -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
 
   # 5.1.5 Ensure sshd Banner is configured. (Automated)
   - id: 18659
@@ -4242,8 +4251,9 @@ checks:
       - cis: ["5.1.5"]
       - mitre_mitigations: ["M1035"]
       - mitre_tactics: ["TA0001", "TA0007"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:sshd -T -> r:^banner && r:/etc/issue.net$"
 
   # 5.1.6 Ensure sshd Ciphers are configured. (Automated)
   - id: 18660
@@ -4285,8 +4295,11 @@ checks:
       - nist_sp_800-53: ["AC-17(2)", "SC-8", "SC-8(1)"]
       - pci_dss_v3.2.1: ["2.1.1", "4.1", "4.1.1", "8.2.1"]
       - pci_dss_v4.0: ["2.2.7", "4.1.1", "4.2.1", "4.2.1.2", "4.2.2", "8.3.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not c:sshd -T -> r:^ciphers && r:3des-cbc|blowfish-cbc|cast128-cbc|aes128-cbc|aes192-cbc|aes256-cbc
+      - not c:sshd -T -> r:^ciphers && r:arcfour128|arcfour256
+      - not c:sshd -T -> r:^ciphers && r:rijndael-cbc@lysator.liu.se|chacha20-poly1305@openssh.com
 
   # 5.1.7 Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured. (Automated)
   - id: 18661
@@ -4299,8 +4312,10 @@ checks:
       - mitre_mitigations: ["M1026"]
       - mitre_tactics: ["TA0001"]
       - mitre_techniques: ["T1078", "T1078.001", "T1078.002", "T1078.003"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> n:^clientaliveinterval\s*\t*(\d+) compare > 0
+      - c:sshd -T -> n:^clientalivecountmax\s*\t*(\d+) compare > 0
 
   # 5.1.8 Ensure sshd DisableForwarding is enabled. (Automated)
   - id: 18662
@@ -4321,8 +4336,9 @@ checks:
       - pci_dss_v3.2.1: ["1.1.6", "1.2.1", "2.2.2", "2.2.5"]
       - pci_dss_v4.0: ["1.2.5", "2.2.4", "6.4.1"]
       - soc_2: ["CC6.3", "CC6.6"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^disableforwarding\s*\t*yes
 
   # 5.1.9 Ensure sshd GSSAPIAuthentication is disabled. (Automated)
   - id: 18663
@@ -4341,8 +4357,9 @@ checks:
       - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^gssapiauthentication\s*\t*no
 
   # 5.1.10 Ensure sshd HostbasedAuthentication is disabled. (Automated)
   - id: 18664
@@ -4355,8 +4372,9 @@ checks:
       - mitre_mitigations: ["M1042"]
       - mitre_tactics: ["TA0001"]
       - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^hostbasedauthentication\s*\t*no
 
   # 5.1.11 Ensure sshd IgnoreRhosts is enabled. (Automated)
   - id: 18665
@@ -4375,8 +4393,9 @@ checks:
       - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^ignorerhosts\s*\t*yes
 
   # 5.1.12 Ensure sshd KexAlgorithms is configured. (Automated)
   - id: 18666
@@ -4413,8 +4432,9 @@ checks:
       - nist_sp_800-53: ["AC-17(2)", "SC-8", "SC-8(1)"]
       - pci_dss_v3.2.1: ["2.1.1", "4.1", "4.1.1", "8.2.1"]
       - pci_dss_v4.0: ["2.2.7", "4.1.1", "4.2.1", "4.2.1.2", "4.2.2", "8.3.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not c:sshd -T -> r:^kexalgorithms && r:diffie-hellman-group1-sha1|diffie-hellman-group14-sha1|diffie-hellman-group-exchange-sha1
 
   # 5.1.13 Ensure sshd LoginGraceTime is configured. (Automated)
   - id: 18667
@@ -4427,8 +4447,9 @@ checks:
       - mitre_mitigations: ["M1036"]
       - mitre_tactics: ["TA0006"]
       - mitre_techniques: ["T1110", "T1110.001", "T1110.003", "T1110.004"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> n:^logingracetime\s*\t*(\d+) compare >= 1 && n:^logingracetime\s*\t*(\d+) compare <= 60
 
   # 5.1.14 Ensure sshd LogLevel is configured. (Automated)
   - id: 18668
@@ -4464,8 +4485,9 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^loglevel && r:VERBOSE|INFO
 
   # 5.1.15 Ensure sshd MACs are configured. (Automated)
   - id: 18669
@@ -4503,8 +4525,11 @@ checks:
       - nist_sp_800-53: ["AC-17(2)", "SC-8", "SC-8(1)"]
       - pci_dss_v3.2.1: ["2.1.1", "4.1", "4.1.1", "8.2.1"]
       - pci_dss_v4.0: ["2.2.7", "4.1.1", "4.2.1", "4.2.1.2", "4.2.2", "8.3.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not c:sshd -T -> r:^macs && r:hmac-md5|hmac-md5-96|hmac-ripemd160|hmac-sha1-96
+      - not c:sshd -T -> r:^macs && r:hmac-md5-etm@openssh.com|hmac-md5-96-etm@openssh.com|hmac-ripemd160-etm@openssh.com|hmac-sha1-96-etm@openssh.com
+      - not c:sshd -T -> r:^macs && r:umac-64@openssh.com|umac-64-etm@openssh.com|umac-128-etm@openssh.com
 
   # 5.1.16 Ensure sshd MaxAuthTries is configured. (Automated)
   - id: 18670
@@ -4524,8 +4549,9 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> n:^maxauthtries\s*\t*(\d+) compare <= 4
 
   # 5.1.17 Ensure sshd MaxSessions is configured. (Automated)
   - id: 18671
@@ -4537,8 +4563,9 @@ checks:
       - cis: ["5.1.17"]
       - mitre_tactics: ["TA0040"]
       - mitre_techniques: ["T1499", "T1499.002"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> n:^maxsessions\s*\t*(\d+) compare <= 10
 
   # 5.1.18 Ensure sshd MaxStartups is configured. (Automated)
   - id: 18672
@@ -4550,8 +4577,11 @@ checks:
       - cis: ["5.1.18"]
       - mitre_tactics: ["TA0040"]
       - mitre_techniques: ["T1499", "T1499.002"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> n:^maxstartups\s*\t*(\d+):\d+:\d+ compare >= 10
+      - c:sshd -T -> n:^maxstartups\s*\t*\d+:(\d+):\d+ compare >= 30
+      - c:sshd -T -> n:^maxstartups\s*\t*\d+:\d+:(\d+) compare >= 60
 
   # 5.1.19 Ensure sshd PermitEmptyPasswords is disabled. (Automated)
   - id: 18673
@@ -4570,8 +4600,9 @@ checks:
       - mitre_techniques: ["T1021"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^permitemptypasswords\s*\t*no
 
   # 5.1.20 Ensure sshd PermitRootLogin is disabled. (Automated)
   - id: 18674
@@ -4591,8 +4622,9 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^permitrootlogin\s*\t*no
 
   # 5.1.21 Ensure sshd PermitUserEnvironment is disabled. (Automated)
   - id: 18675
@@ -4605,8 +4637,9 @@ checks:
       - mitre_mitigations: ["M1042"]
       - mitre_tactics: ["TA0008"]
       - mitre_techniques: ["T1021"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^permituserenvironment\s*\t*no
 
   # 5.1.22 Ensure sshd UsePAM is enabled. (Automated)
   - id: 18676
@@ -4625,8 +4658,9 @@ checks:
       - mitre_techniques: ["T1021", "T1021.004"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:sshd -T -> r:^usepam\s*\t*yes
 
   # 5.2.1 Ensure sudo is installed. (Automated)
   - id: 18677
@@ -4646,8 +4680,9 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s sudo -> r:^Status: install ok installed"
 
   # 5.2.2 Ensure sudo commands use pty. (Automated)
   - id: 18678
@@ -4668,8 +4703,10 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - 'f:/etc/sudoers -> r:^\s*\t*Defaults\s*\t*use_pty'
+      - 'd:/etc/sudoers.d -> r:\.* -> r:^\s*\t*Defaults\s*\t*use_pty'
 
   # 5.2.3 Ensure sudo log file exists. (Automated)
   - id: 18679
@@ -4691,8 +4728,10 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - 'f:/etc/sudoers -> r:^\s*\t*Defaults\s*\t*logfile=\S+.log'
+      - 'd:/etc/sudoers.d -> \.* -> r:^\s*\t*Defaults\s*\t*logfile=\S+.log'
 
   # 5.2.4 Ensure users must provide password for privilege escalation. (Automated)
   - id: 18680
@@ -4713,8 +4752,10 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not f:/etc/sudoers -> r:^\s*\t*NOPASSWD'
+      - 'not d:/etc/sudoers.d -> r:\.* -> r:^\s*\t*NOPASSWD'
 
   # 5.2.5 Ensure re-authentication for privilege escalation is not disabled globally. (Automated)
   - id: 18681
@@ -4734,8 +4775,10 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not f:/etc/sudoers -> r:^\s*\t*!authenticate'
+      - 'not d:/etc/sudoers.d -> r:\.* -> r:^\s*\t*!authenticate'
 
   # 5.2.6 Ensure sudo authentication timeout is configured correctly. (Automated)
   - id: 18682
@@ -4757,8 +4800,11 @@ checks:
       - nist_sp_800-53: ["AC-6(2)", "AC-6(5)"]
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - soc_2: ["CC6.1", "CC6.3"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - 'f:/etc/sudoers -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare >= 0'
+      - 'd:/etc/sudoers.d -> r:\.* -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare >= 0'
+      - 'c:sudo -V -> n:Authentication timestamp timeout:\s*\t*(\d+) compare <= 15 && n:Authentication timestamp timeout:\s*\t*(\d+) compare >= 0'
 
   # 5.2.7 Ensure access to the su command is restricted. (Automated)
   - id: 18683
@@ -4787,28 +4833,33 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/su -> !r:^# && r:auth\s*required\s*pam_wheel.so && r:use_uid && r:group=
 
   # 5.3.1.1 Ensure latest version of pam is installed. (Automated)
   - id: 18684
     title: "Ensure latest version of pam is installed."
     description: "Updated versions of PAM include additional functionality."
     rationale: "To ensure the system has full functionality and access to the options covered by this Benchmark the latest version of libpam-runtime should be installed on the system."
+    remediation: "Run the following command to update to the latest version of PAM: # apt upgrade libpam-runtime"
     compliance:
       - cis: ["5.3.1.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s libpam-runtime -> r:^Status: install ok installed"
 
   # 5.3.1.2 Ensure libpam-modules is installed. (Automated)
   - id: 18685
     title: "Ensure libpam-modules is installed."
     description: "Pluggable Authentication Modules for PAM."
     rationale: "To ensure the system has full functionality and access to the PAM options covered by this Benchmark."
+    remediation: "Run the following command to update to the latest version of PAM: # apt upgrade libpam-modules"
     compliance:
       - cis: ["5.3.1.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s libpam-modules -> r:^Status: install ok installed"
 
   # 5.3.1.3 Ensure libpam-pwquality is installed. (Automated)
   - id: 18686
@@ -4820,8 +4871,9 @@ checks:
       - "https://packages.debian.org/buster/libpam-pwquality"
     compliance:
       - cis: ["5.3.1.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s libpam-pwquality -> r:^Status: install ok installed"
 
   # 5.3.2.1 Ensure pam_unix module is enabled. (Automated)
   - id: 18687
@@ -4860,8 +4912,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-account -> r:^account\s*\t*[success=1 new_authtok_reqd=done default=ignore] && r:pam_unix.so
+      - f:/etc/pam.d/common-session -> r:^session\s*\t*required && r:pam_unix.so
+      - f:/etc/pam.d/common-auth -> r:^auth && r:[success=2|[success=3 && r:default=ignore] && r:pam_unix.so
+      - f:/etc/pam.d/common-password -> r:^password && r:[success=1|[success=2 && r:default=ignore] && r:pam_unix.so
 
   # 5.3.2.2 Ensure pam_faillock module is enabled. (Automated)
   - id: 18688
@@ -4883,8 +4939,11 @@ checks:
       - pci_dss_v3.2.1: ["8.1.3"]
       - pci_dss_v4.0: ["8.2.4", "8.2.5"]
       - soc_2: ["CC6.2", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-auth -> r:^auth\s*\t*requisite && r:pam_faillock.so
+      - f:/etc/pam.d/common-auth -> r:^auth\s*\t*[default=die] && r:pam_faillock.so
+      - f:/etc/pam.d/common-account -> r:^account\s*\t*required && r:pam_faillock.so
 
   # 5.3.2.3 Ensure pam_pwquality module is enabled. (Automated)
   - id: 18689
@@ -4913,8 +4972,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite && r:pam_pwquality.so
 
   # 5.3.2.4 Ensure pam_pwhistory module is enabled. (Automated)
   - id: 18690
@@ -4943,8 +5003,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite && r:pam_pwhistory.so
 
   # 5.3.3.1.1 Ensure password failed attempts lockout is configured. (Automated)
   - id: 18691
@@ -4966,8 +5027,9 @@ checks:
       - pci_dss_v3.2.1: ["8.1.3"]
       - pci_dss_v4.0: ["8.2.4", "8.2.5"]
       - soc_2: ["CC6.2", "CC6.3"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/security/faillock.conf -> n:^deny\s*\t*=\s*\t*(\d+) compare <= 5
 
   # 5.3.3.1.2 Ensure password unlock time is configured. (Automated)
   - id: 18692
@@ -4990,8 +5052,10 @@ checks:
       - pci_dss_v3.2.1: ["8.1.3"]
       - pci_dss_v4.0: ["8.2.4", "8.2.5"]
       - soc_2: ["CC6.2", "CC6.3"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\d+) compare == 0
+      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\d+) compare >= 900
 
   # 5.3.3.1.3 Ensure password failed attempts lockout includes root account. (Automated)
   - id: 18693
@@ -5014,8 +5078,10 @@ checks:
       - pci_dss_v3.2.1: ["8.1.3"]
       - pci_dss_v4.0: ["8.2.4", "8.2.5"]
       - soc_2: ["CC6.2", "CC6.3"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - f:/etc/security/faillock.conf -> r:^even_deny_root
+      - f:/etc/security/faillock.conf -> n:^root_unlock_time\s*\t*=\s*\t*(\d+) compare >= 60
 
   # 5.3.3.2.1 Ensure password number of changed characters is configured. (Automated)
   - id: 18694
@@ -5044,8 +5110,10 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - f:/etc/security/pwquality.conf -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
+      - d:/etc/security/pwquality.conf.d -> r:\..conf -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
 
   # 5.3.3.2.2 Ensure minimum password length is configured. (Automated)
   - id: 18695
@@ -5075,8 +5143,10 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - f:/etc/security/pwquality.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
+      - d:/etc/security/pwquality.conf.d -> r:\..conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
 
   # 5.3.3.2.3 Ensure password complexity is configured. (Manual)
   - id: 18696
@@ -5108,8 +5178,14 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      # TODO: negative compare is not working
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^minclass\s*\t*=\s*\t*(\p*\d+) compare > 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^ucredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^lcredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^dcredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^ocredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
 
   # 5.3.3.2.4 Ensure password same consecutive characters is configured. (Automated)
   - id: 18697
@@ -5138,8 +5214,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxrepeat\s*\t*=\s*\t*(\d+) compare <= 3 && n:^maxrepeat\s*\t*=\s*\t*(\d+) compare > 0
 
   # 5.3.3.2.5 Ensure password maximum sequential characters is configured. (Automated)
   - id: 18698
@@ -5168,8 +5245,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxsequence\s*\t*=\s*\t*(\d+) compare <= 3 && n:^maxsequence\s*\t*=\s*\t*(\d+) compare > 0
 
   # 5.3.3.2.6 Ensure password dictionary check is enabled. (Automated)
   - id: 18699
@@ -5198,8 +5276,10 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not f:/etc/security/pwquality.conf -> r:^dictcheck\s*\t*=\s*\t*0
+      - not d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^dictcheck\s*\t*=\s*\t*0
 
   # 5.3.3.2.7 Ensure password quality checking is enforced. (Automated)
   - id: 18700
@@ -5215,8 +5295,10 @@ checks:
       - iso_27001-2013: ["A.9.4.3"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not f:/etc/security/pwquality.conf -> r:^enforcing\s*\t*=\s*\t*0
+      - not d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^enforcing\s*\t*=\s*\t*0
 
   # 5.3.3.2.8 Ensure password quality is enforced for the root user. (Automated)
   - id: 18701
@@ -5232,8 +5314,10 @@ checks:
       - iso_27001-2013: ["A.9.4.3"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - f:/etc/security/pwquality.conf -> r:^enforce_for_root
+      - d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^enforce_for_root
 
   # 5.3.3.3.1 Ensure password history remember is configured. (Automated)
   - id: 18702
@@ -5259,8 +5343,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite\s*\t*pam_pwhistory.so && n:remember=(\d+) compare >= 24
 
   # 5.3.3.3.2 Ensure password history is enforced for the root user. (Automated)
   - id: 18703
@@ -5289,8 +5374,9 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite\s*\t*pam_pwhistory.so && r:enforce_for_root
 
   # 5.3.3.3.3 Ensure pam_pwhistory includes use_authtok. (Automated)
   - id: 18704
@@ -5320,8 +5406,9 @@ checks:
       - pci_dss_v4.0:
           ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite\s*\t*pam_pwhistory.so && r:use_authtok
 
   # 5.3.3.4.1 Ensure pam_unix does not include nullok. (Automated)
   - id: 18705
@@ -5340,8 +5427,13 @@ checks:
       - mitre_techniques: ["T1003", "T1003.008", "T1110", "T1110.002"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not f:/etc/pam.d/common-password -> r:pam_unix.so && r:nullok
+      - not f:/etc/pam.d/common-auth -> r:pam_unix.so && r:nullok
+      - not f:/etc/pam.d/common-account -> r:pam_unix.so && r:nullok
+      - not f:/etc/pam.d/common-session -> r:pam_unix.so && r:nullok
+      - not f:/etc/pam.d/common-session-noninteractive -> r:pam_unix.so && r:nullok
 
   # 5.3.3.4.2 Ensure pam_unix does not include remember. (Automated)
   - id: 18706
@@ -5360,8 +5452,13 @@ checks:
       - mitre_techniques: ["T1003", "T1003.008", "T1110", "T1110.002"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not f:/etc/pam.d/common-password -> r:pam_unix.so && r:remember
+      - not f:/etc/pam.d/common-auth -> r:pam_unix.so && r:remember
+      - not f:/etc/pam.d/common-account -> r:pam_unix.so && r:remember
+      - not f:/etc/pam.d/common-session -> r:pam_unix.so && r:remember
+      - not f:/etc/pam.d/common-session-noninteractive -> r:pam_unix.so && r:remember
 
   # 5.3.3.4.3 Ensure pam_unix includes a strong password hashing algorithm. (Automated)
   - id: 18707
@@ -5391,8 +5488,9 @@ checks:
       - pci_dss_v4.0:
           ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password && r:pam_unix.so && r:sha512|yescrypt
 
   # 5.3.3.4.4 Ensure pam_unix includes use_authtok. (Automated)
   - id: 18708
@@ -5422,8 +5520,9 @@ checks:
       - pci_dss_v4.0:
           ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/pam.d/common-password -> r:^password && r:pam_unix.so && r:use_authtok
 
   # 5.4.1.1 Ensure password expiration is configured. (Automated)
   - id: 18709
@@ -5453,8 +5552,10 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/login.defs -> n:^PASS_MAX_DAYS\s*\t*(\d+) compare <= 365 && n:^PASS_MAX_DAYS\s*\t*(\d+) compare > 0
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare <= 365 && n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare > 0'
 
   # 5.4.1.2 Ensure minimum password days is configured. (Manual)
   - id: 18710
@@ -5483,8 +5584,10 @@ checks:
           ]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/login.defs -> n:^PASS_MIN_DAYS\s*\t*(\d+) compare > 0
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:(\d+):\.*:\.*:\.*:\.*: compare > 0'
 
   # 5.4.1.3 Ensure password expiration warning days is configured. (Automated)
   - id: 18711
@@ -5514,8 +5617,10 @@ checks:
       - pci_dss_v4.0:
           ["1.1.1", "1.2.1", "1.2.6", "1.2.7", "1.5.1", "2.1.1", "2.2.1"]
       - soc_2: ["CC7.1", "CC8.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/login.defs -> n:^PASS_WARN_AGE\s*\t*(\d+) compare >= 7
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:(\d+):\.*:\.*: compare >= 7'
 
   # 5.4.1.4 Ensure strong password hashing algorithm is configured. (Automated)
   - id: 18712
@@ -5545,8 +5650,9 @@ checks:
       - pci_dss_v4.0:
           ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/login.defs -> r:^ENCRYPT_METHOD && r:sha512|yescrypt
 
   # 5.4.1.5 Ensure inactive password lock is configured. (Automated)
   - id: 18713
@@ -5565,38 +5671,41 @@ checks:
       - mitre_techniques: ["T1078", "T1078.002", "T1078.003"]
       - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:useradd -D -> n:^INACTIVE\s*\t*=\s*\t*(\d+) compare <= 45
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:\.*:(\d+):\.*: compare <= 45'
 
-  # 5.4.1.6 Ensure all users last password change date is in the past. (Automated)
-  - id: 18714
-    title: "Ensure all users last password change date is in the past."
-    description: "All users should have a password change date in the past."
-    rationale: "If a user's recorded password change date is in the future, then they could bypass any set password expiration."
-    remediation: "Investigate any users with a password change date in the future and correct them. Locking the account, expiring the password, or resetting the password manually may be appropriate."
-    compliance:
-      - cis: ["5.4.1.6"]
-      - cis_csc_v8: ["5.2"]
-      - cis_csc_v7: ["4.4"]
-      - cmmc_v2.0: ["IA.L2-3.5.7"]
-      - iso_27001-2013: ["A.9.4.3"]
-      - mitre_techniques:
-          [
-            "T1078",
-            "T1078.001",
-            "T1078.002",
-            "T1078.003",
-            "T1078.004",
-            "T1110",
-            "T1110.001",
-            "T1110.002",
-            "T1110.003",
-            "T1110.004",
-          ]
-      - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
-      - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+  # # 5.4.1.6 Ensure all users last password change date is in the past. (Automated) - Not Implemented
+  # - id: 18714
+  #   title: "Ensure all users last password change date is in the past."
+  #   description: "All users should have a password change date in the past."
+  #   rationale: "If a user's recorded password change date is in the future, then they could bypass any set password expiration."
+  #   remediation: "Investigate any users with a password change date in the future and correct them. Locking the account, expiring the password, or resetting the password manually may be appropriate."
+  #   compliance:
+  #     - cis: ["5.4.1.6"]
+  #     - cis_csc_v8: ["5.2"]
+  #     - cis_csc_v7: ["4.4"]
+  #     - cmmc_v2.0: ["IA.L2-3.5.7"]
+  #     - iso_27001-2013: ["A.9.4.3"]
+  #     - mitre_techniques:
+  #         [
+  #           "T1078",
+  #           "T1078.001",
+  #           "T1078.002",
+  #           "T1078.003",
+  #           "T1078.004",
+  #           "T1110",
+  #           "T1110.001",
+  #           "T1110.002",
+  #           "T1110.003",
+  #           "T1110.004",
+  #         ]
+  #     - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
+  #     - soc_2: ["CC6.1"]
+  #   condition: none
+  #   rules:
+  #     - "c:sh -c 'awk -F: '\\''$2~/^\\$.*\\$/{print $1}'\\'' /etc/shadow | xargs -I {} chage --list {} | grep '\\''^Last password change'\\'' | cut -d: -f2 | xargs -I {} date -d {} +%s' -> n:(\\d+) compare >= 0"
 
   # 5.4.2.1 Ensure root is the only UID 0 account. (Automated)
   - id: 18715
@@ -5609,8 +5718,9 @@ checks:
       - mitre_mitigations: ["M1026"]
       - mitre_tactics: ["TA0001"]
       - mitre_techniques: ["T1548"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not f:/etc/passwd -> !r:^# && !r:^root: && r:^\w+:\w+:0:'
 
   # 5.4.2.2 Ensure root is the only GID 0 account. (Automated)
   - id: 18716
@@ -5639,8 +5749,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not f:/etc/passwd -> !r:^# && !r:^root: && r:^\w+:\w+:\d+:0:'
 
   # 5.4.2.3 Ensure group root is the only GID 0 group. (Automated)
   - id: 18717
@@ -5669,8 +5780,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not f:/etc/group -> !r:^# && !r:^root: && r:^\w+:\w+:0:'
 
   # 5.4.2.4 Ensure root account access is controlled. (Automated)
   - id: 18718
@@ -5700,22 +5812,24 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - c:passwd -S root -> r:root\s*\t*L
+      - c:passwd -S root -> r:root\s*\t*P
 
-  # 5.4.2.5 Ensure root path integrity. (Automated)
-  - id: 18719
-    title: "Ensure root path integrity."
-    description: "The root user can execute any command on the system and could be fooled into executing programs unintentionally if the PATH is not set correctly."
-    rationale: "Including the current working directory (.) or other writable directory in root's executable path makes it likely that an attacker can gain superuser access by forcing an administrator operating as root to execute a Trojan horse program."
-    remediation: "Correct or justify any: - Locations that are not directories - Empty directories (::) - Trailing (:) - Current working directory (.) - Non root owned directories - Directories that less restrictive than mode 0755."
-    compliance:
-      - cis: ["5.4.2.5"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0006"]
-      - mitre_techniques: ["T1204", "T1204.002"]
-    condition: none
-    rules: []
+  # # 5.4.2.5 Ensure root path integrity. (Automated) - Not implemented
+  # - id: 18719
+  #   title: "Ensure root path integrity."
+  #   description: "The root user can execute any command on the system and could be fooled into executing programs unintentionally if the PATH is not set correctly."
+  #   rationale: "Including the current working directory (.) or other writable directory in root's executable path makes it likely that an attacker can gain superuser access by forcing an administrator operating as root to execute a Trojan horse program."
+  #   remediation: "Correct or justify any: - Locations that are not directories - Empty directories (::) - Trailing (:) - Current working directory (.) - Non root owned directories - Directories that less restrictive than mode 0755."
+  #   compliance:
+  #     - cis: ["5.4.2.5"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0006"]
+  #     - mitre_techniques: ["T1204", "T1204.002"]
+  #   condition: none
+  #   rules: []
 
   # 5.4.2.6 Ensure root user umask is configured. (Automated)
   - id: 18720
@@ -5743,8 +5857,10 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/root/.bash_profile -> r:umask && r:0027|0077
+      - f:/root/.bashrc -> r:umask && r:0027|0077
 
   # 5.4.2.7 Ensure system accounts do not have a valid login shell. (Automated)
   - id: 18721
@@ -5773,38 +5889,41 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'not c:sh -c "awk -F: -v min_uid=\"\$(awk ''/^\\s*UID_MIN/{print \$2}'' /etc/login.defs)\" -v valid_shells=\"\$(awk -F/ ''\$NF != \"nologin\" {print}'' /etc/shells | sed -rn ''/^\\//{s,/,\\\\/,g;p}'' | paste -s -d ''|'')\" ''(\$1 != \"root\" && \$1 != \"halt\" && \$1 != \"sync\" && \$1 != \"shutdown\" && \$1 != \"nfsnobody\") && (\$3 < min_uid || \$3 == 65534) && (\$NF ~ \"^(\" valid_shells \")\$\") {print \"failed\"}'' /etc/passwd" -> r:^failed'
+      # - "not c:sh -c 'awk -v pat=\"^($(awk -F\\/ '\\''$NF != \"nologin\" {print}'\\'' /etc/shells | sed -rn '\\''/^\\//{s,/,\\\\\\\\/,g;p}'\\'' | paste -s -d '\\''|'\\'' - ))$\" -F: '\\''($1!~/^(root|halt|sync|shutdown|nfsnobody)$/ && ($3<'\\''\"$(awk '\\''/^\\s*UID_MIN/{print $2}'\\'' /etc/login.defs)\"'\\'' || $3 == 65534) && $(NF) ~ pat) {print \"failed\"}'\\'' /etc/passwd' -> r:^failed"
 
-  # 5.4.2.8 Ensure accounts without a valid login shell are locked. (Automated)
-  - id: 18722
-    title: "Ensure accounts without a valid login shell are locked."
-    description: "There are a number of accounts provided with most distributions that are used to manage applications and are not intended to provide an interactive shell. Furthermore, a user may add special accounts that are not intended to provide an interactive shell."
-    rationale: "It is important to make sure that accounts that are not being used by regular users are prevented from being used to provide an interactive shell. By default, most distributions set the password field for these accounts to an invalid string, but it is also recommended that the shell field in the password file be set to the nologin shell. This prevents the account from potentially being used to run any commands."
-    remediation: "Run the following command to lock any non-root accounts without a valid login shell returned by the audit: # usermod -L <user> Example script:: #!/usr/bin/env bash { l_valid_shells=\"^($(awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" while IFS= read -r l_user; do passwd -S \"$l_user\" | awk '$2 !~ /^L/ {system (\"usermod -L \" $1)}' done < <(awk -v pat=\"$l_valid_shells\" -F: '($1 != \"root\" && $(NF) !~ pat) {print $1}' /etc/passwd) }."
-    compliance:
-      - cis: ["5.4.2.8"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1026"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 5.4.2.8 Ensure accounts without a valid login shell are locked. (Automated) - Not implemented
+  # - id: 18722
+  #   title: "Ensure accounts without a valid login shell are locked."
+  #   description: "There are a number of accounts provided with most distributions that are used to manage applications and are not intended to provide an interactive shell. Furthermore, a user may add special accounts that are not intended to provide an interactive shell."
+  #   rationale: "It is important to make sure that accounts that are not being used by regular users are prevented from being used to provide an interactive shell. By default, most distributions set the password field for these accounts to an invalid string, but it is also recommended that the shell field in the password file be set to the nologin shell. This prevents the account from potentially being used to run any commands."
+  #   remediation: "Run the following command to lock any non-root accounts without a valid login shell returned by the audit: # usermod -L <user> Example script:: #!/usr/bin/env bash { l_valid_shells=\"^($(awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" while IFS= read -r l_user; do passwd -S \"$l_user\" | awk '$2 !~ /^L/ {system (\"usermod -L \" $1)}' done < <(awk -v pat=\"$l_valid_shells\" -F: '($1 != \"root\" && $(NF) !~ pat) {print $1}' /etc/passwd) }."
+  #   compliance:
+  #     - cis: ["5.4.2.8"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1026"]
+  #     - mitre_tactics: ["TA0005"]
+  #     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: all
+  #   rules:
+  #     - "not c:sh -c 'while IFS= read -r l_user; do passwd -S \"$l_user\" | awk '\\''$2 !~ /^L/ {print \"failed\"}'\\''; done < <(awk -v pat=\"^($(awk -F\\/ '\\''$NF != \"nologin\" {print}'\\'' /etc/shells | sed -rn '\\''/^\\//{s,/,\\\\\\\\/,g;p}'\\'' | paste -s -d '\\''|'\\'' -))$\" -F: '\\''($1 != \"root\" && $(NF) !~ pat) {print $1}'\\'' /etc/passwd)' -> r:\\."
 
   # 5.4.3.1 Ensure nologin is not listed in /etc/shells. (Automated)
   - id: 18723
@@ -5814,8 +5933,9 @@ checks:
     remediation: "Edit /etc/shells and remove any lines that include nologin."
     compliance:
       - cis: ["5.4.3.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not f:/etc/shells -> !r:^# && r:nologin
 
   # 5.4.3.2 Ensure default user shell timeout is configured. (Automated)
   - id: 18724
@@ -5836,8 +5956,11 @@ checks:
       - nist_sp_800-53: ["AC-11", "AC-11(1)", "AC-12", "AC-2(5)"]
       - pci_dss_v3.2.1: ["8.1.8"]
       - pci_dss_v4.0: ["8.2.8"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> n:TMOUT\s*\t*=\s*\t*(\d+) compare <= 900 && n:TMOUT\s*\t*=\s*\t*(\d+) compare > 0
+      - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> r:readonly\s*\t*TMOUT
+      - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> r:export\s*\t*TMOUT
 
   # 5.4.3.3 Ensure default user umask is configured. (Automated)
   - id: 18725
@@ -5865,8 +5988,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:cat /etc/profile /etc/login.defs /etc/default/login /etc/profile.d/*.sh -> r:umask && r:027
 
   # 6.1.1.1 Ensure journald service is enabled and active. (Automated)
   - id: 18726
