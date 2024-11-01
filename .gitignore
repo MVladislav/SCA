@@ -6,7 +6,6 @@
 !.github/
 !.github/**
 
-!.dockerignore
 !.gitattributes
 !.gitignore
 !.gitempty

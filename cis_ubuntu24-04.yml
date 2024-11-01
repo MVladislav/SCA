@@ -1392,7 +1392,6 @@ checks:
     condition: all
     rules:
       - c:cat /etc/security/limits.conf /etc/security/limits.d/* -> !r:^# && r:hard\s*\t*core\s*\t*0
-      # - c:grep -Rh "hard\s*\t*core\s*\t*0" /etc/security/limits.conf /etc/security/limits.d/ -> !r:^# && r:hard\s*\t*core\s*\t*0
       - c:grep -Rh ^fs\.suid_dumpable /etc/sysctl.conf /etc/sysctl.d/ -> r:^fs.suid_dumpable\s*\t*=\s*\t*0
       - c:sysctl fs.suid_dumpable -> r:^fs.suid_dumpable\s*\t*=\s*\t*0
 
@@ -4171,9 +4170,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0600'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?private\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0600'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
 
   # 5.1.3 Ensure permissions on SSH public host key files are configured. (Automated)
   - id: 18657
@@ -4204,9 +4203,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0644'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\s+.*?public\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0644'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
+      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
 
   # 5.1.4 Ensure sshd access is configured. (Automated)
   - id: 18658
@@ -5891,8 +5890,8 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'not c:sh -c "awk -F: -v min_uid=\"\$(awk ''/^\\s*UID_MIN/{print \$2}'' /etc/login.defs)\" -v valid_shells=\"\$(awk -F/ ''\$NF != \"nologin\" {print}'' /etc/shells | sed -rn ''/^\\//{s,/,\\\\/,g;p}'' | paste -s -d ''|'')\" ''(\$1 != \"root\" && \$1 != \"halt\" && \$1 != \"sync\" && \$1 != \"shutdown\" && \$1 != \"nfsnobody\") && (\$3 < min_uid || \$3 == 65534) && (\$NF ~ \"^(\" valid_shells \")\$\") {print \"failed\"}'' /etc/passwd" -> r:^failed'
       # - "not c:sh -c 'awk -v pat=\"^($(awk -F\\/ '\\''$NF != \"nologin\" {print}'\\'' /etc/shells | sed -rn '\\''/^\\//{s,/,\\\\\\\\/,g;p}'\\'' | paste -s -d '\\''|'\\'' - ))$\" -F: '\\''($1!~/^(root|halt|sync|shutdown|nfsnobody)$/ && ($3<'\\''\"$(awk '\\''/^\\s*UID_MIN/{print $2}'\\'' /etc/login.defs)\"'\\'' || $3 == 65534) && $(NF) ~ pat) {print \"failed\"}'\\'' /etc/passwd' -> r:^failed"
+      - 'not c:sh -c "awk -F: -v min_uid=\"\$(awk ''/^\\s*UID_MIN/{print \$2}'' /etc/login.defs)\" -v valid_shells=\"\$(awk -F/ ''\$NF != \"nologin\" {print}'' /etc/shells | sed -rn ''/^\\//{s,/,\\\\/,g;p}'' | paste -s -d ''|'')\" ''(\$1 != \"root\" && \$1 != \"halt\" && \$1 != \"sync\" && \$1 != \"shutdown\" && \$1 != \"nfsnobody\") && (\$3 < min_uid || \$3 == 65534) && (\$NF ~ \"^(\" valid_shells \")\$\") {print \"failed\"}'' /etc/passwd" -> r:^failed'
 
   # # 5.4.2.8 Ensure accounts without a valid login shell are locked. (Automated) - Not implemented
   # - id: 18722

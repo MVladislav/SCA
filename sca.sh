@@ -20,11 +20,15 @@ total_count=0
 pass_count=0
 fail_count=0
 skip_count=0
+not_applicable_count=0
+# Initialize an associative array to hold section counts
+declare -A section_count
 
 CIS_RULE_ID=""
 
 LOG_PRINT_ACTUAL_OUTPUT=0
 LOG_PRINT_DETAIL_CHECK=0
+LOG_PRINT_SECTION_COUNT=0
 SKIP_OS_CHECK=0
 
 main() {
@@ -45,12 +49,9 @@ main() {
 
       if run_check "$rule" "$id" "$title"; then
         echo -e "${BGREEN}✔ Check passed for #${id}: ${title}${NC}"
-        ((pass_count--))
       else
         echo -e "${BRED}✖ Check failed for #${id}: ${title}${NC}"
-        ((fail_count--))
       fi
-      ((total_count--))
     done
   fi
 
@@ -84,10 +85,24 @@ main() {
 
   # Print final results
   echo -e "\n${BYELLOW}All checks complete.${NC}"
-  echo -e "${BCYAN}  ∞ Total Count   Checks: $total_count${NC}"
-  echo -e "${BGREEN}  ✔ Total Passed  Checks: $pass_count${NC}"
-  echo -e "${BRED}  ✖ Total Failed  Checks: $fail_count${NC}"
-  echo -e "${BPURPLE}  ↷ Total Skipped Checks: $skip_count${NC}"
+  echo -e "${BCYAN}  ∞ Total Count          Checks: $total_count${NC}"
+  echo -e "${BGREEN}  ✔ Total Passed         Checks: $pass_count${NC}"
+  echo -e "${BGREEN}  ✔ Pass                  Score: $(awk "BEGIN {printf \"%.2f\", ($pass_count / ($total_count - $not_applicable_count)) * 100}")%${NC}"
+  echo -e "${BRED}  ✖ Total Failed         Checks: $fail_count${NC}"
+  echo -e "${BRED}  ✖ Fail                   Rate: $(awk "BEGIN {printf \"%.2f\", ($fail_count / ($total_count - $not_applicable_count)) * 100}")%${NC}"
+  echo -e "${BPURPLE}  ↷ Total Not Applicable Checks: $not_applicable_count${NC}"
+  echo -e "${BPURPLE}  ↷ Total Skipped        Checks: $skip_count${NC}"
+
+  # Print the section counts
+  if [[ $LOG_PRINT_SECTION_COUNT -eq 1 ]]; then
+    echo -e "\n${BYELLOW}Rules per Section performed.${NC}"
+    section_keys=("${!section_count[@]}")
+    for ((index = ${#section_keys[@]} - 1; index >= 0; index--)); do
+      section=${section_keys[index]}
+      echo -e "${BCYAN} 📝 Section$section Count      : ${section_count[$section]}${NC}"
+    done
+  fi
+
 }
 
 # Function to parse and run a command, then check output against a regex
@@ -119,14 +134,12 @@ run_check() {
   local output
   case "$type_part" in
   f:*)
-    if [[ -z "$regex_part" ]]; then
-      if [[ -e "${type_part#f:}" ]]; then
-        print_message success "$id" "$title" "$regex_part" "$type_part_o" "File does exist!" "$negate"
-        return $?
-      else
-        print_message failed "$id" "$title" "$regex_part" "$type_part_o" "File does not exist!" "$negate"
-        return $?
-      fi
+    if [[ ! -e "${type_part#f:}" ]]; then
+      print_message not_applicable "$id" "$title" "$regex_part" "$type_part_o" "File does not exist!" # "$negate"
+      return $?
+    elif [[ -z "$regex_part" && -e "${type_part#f:}" ]]; then
+      print_message success "$id" "$title" "$regex_part" "$type_part_o" "File does exist!" "$negate"
+      return $?
     fi
     output=$(eval "cat ${type_part#f:}" 2>&1)
     ;;
@@ -151,7 +164,8 @@ run_check() {
   d:*)
     local dir_path="${type_part#d:}"
     if [[ ! -d "$dir_path" ]]; then
-      print_message failed "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" "$negate"
+      # print_message failed "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" "$negate"
+      print_message not_applicable "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" # "$negate"
       return $?
     fi
 
@@ -231,7 +245,8 @@ process_file_check() {
 
   # Check if command execution not fall into not found
   if [[ -n "$output" && "$output" == *"command not found"* ]]; then
-    print_message error "$id" "$title" "$regex_part" "$type_part_o" "$output"
+    # print_message error "$id" "$title" "$regex_part" "$type_part_o" "$output"
+    print_message not_applicable "$id" "$title" "$regex_part" "$type_part_o" "$output" # "$negate"
     return $?
   fi
 
@@ -272,14 +287,17 @@ process_file_check() {
     esac
 
     match_output=$(echo "$output_result" | LD_LIBRARY_PATH="$LD_LIBRARY_PATH" "$WAZUH_REGEX_PATH" "$regex" 2>&1)
-    match_output=$(echo "$match_output" | sed -E 's/^\+OS(Match_Compile|_Match2)[[:space:]]*:[[:space:]]*//')
+    match_output=$(echo "$match_output" | sed -E 's/^\+OS(Match_Compile|_Match2|Regex_Execute|_Regex)[[:space:]]*:[[:space:]]*//')
 
     if [[ -n "$match_output" ]]; then
       if [[ -n "$compare" && -n "$verify" ]]; then
         if [[ "$match_output" =~ \-Substring:\ ([0-9]+) ]]; then
           local captured_value="${BASH_REMATCH[1]}" # Extract captured number
           if compare_values "$captured_value" "$compare" "$verify"; then
+            output_result=$match_output
             success=1
+          else
+            break
           fi
         fi
       else
@@ -323,52 +341,61 @@ extract_from_yaml() {
   fi
 
   [[ "$LOG_PRINT_DETAIL_CHECK" == 1 ]] && echo -e "\n${BYELLOW}💡 Check #${id}: ${title}${NC}"
-  local rules_processed=0 rules_failed=0 rules_skipped=0
+  local rules_processed=0 rules_pass=0 rules_failed=0 rules_skipped=0 rules_not_applicable=0
 
   for ((j = 0; j < rules_count; j++)); do
     # shellcheck disable=SC2155
     local rule=$(echo "$rules" | jq ".[${j}]")
     run_check "$rule" "$id" "$title"
     case $? in
+    0) ((rules_pass++)) ;;
     1) ((rules_failed++)) ;;
     2)
       ((rules_skipped++))
       ((rules_failed++))
       ;;
+    3)
+      ((rules_skipped++))
+      ((rules_not_applicable++))
+      ;;
     esac
     ((rules_processed++))
   done
 
-  # Process condition outcomes
   ((total_count++))
+  [[ $LOG_PRINT_SECTION_COUNT -eq 1 ]] && ((section_count[${cis_compliance%%.*}]++))
+
+  # if ((rules_skipped > 0)); then
+  #   echo -e "${BPURPLE}↷ Check skipped for #${id}: ${title} (Condition: ${condition})${NC}"
+  #   ((skip_count++))
+  # fi
+  # Process condition outcomes
   case "$condition" in
   "all")
-    if ((rules_skipped > 0)); then
-      echo -e "${BPURPLE}↷ Check skipped for #${id}: ${title} (Condition: ${condition})${NC}"
-      ((skip_count++))
-    fi
     if ((rules_failed > 0)); then
       echo -e "${BRED}✖ Check failed for #${id}: ${title} (Condition: ${condition})${NC}"
       ((fail_count++))
-    elif ((rules_failed == 0 && rules_processed > 0)); then
+    elif ((rules_failed == 0 && rules_processed == rules_pass)); then
       echo -e "${BGREEN}✔ Check passed for #${id}: ${title} (Condition: ${condition})${NC}"
       ((pass_count++))
+    elif ((rules_not_applicable > 0)); then
+      echo -e "${BPURPLE}↷ Check not applicable for #${id}: ${title} (Condition: ${condition})${NC}"
+      ((not_applicable_count++))
     else
       echo -e "${BPURPLE}↷ Check skipped for #${id}: ${title} (Condition: ${condition})${NC}"
       ((skip_count++))
     fi
     ;;
   *)
-    if ((rules_skipped > 0)); then
-      echo -e "${BPURPLE}↷ Check skipped for #${id}: ${title} (Condition: ${condition})${NC}"
-      ((skip_count++))
-    fi
     if ((rules_processed == rules_failed && rules_processed > 0)); then
       echo -e "${BRED}✖ Check failed for #${id}: ${title} (Condition: ${condition})${NC}"
       ((fail_count++))
-    elif ((rules_processed > rules_failed && rules_processed > 0)); then
+    elif ((rules_processed > rules_failed && rules_processed > 0 && rules_pass > 0)); then
       echo -e "${BGREEN}✔ Check passed for #${id}: ${title} (Condition: ${condition})${NC}"
       ((pass_count++))
+    elif ((rules_not_applicable > 0)); then
+      echo -e "${BPURPLE}↷ Check not applicable for #${id}: ${title} (Condition: ${condition})${NC}"
+      ((not_applicable_count++))
     else
       echo -e "${BPURPLE}↷ Check skipped for #${id}: ${title} (Condition: ${condition})${NC}"
       ((skip_count++))
@@ -407,6 +434,8 @@ print_message() {
     status="failed"
   elif [[ "$negate" == true && "$status" == "failed" ]]; then
     status="success"
+  elif [[ "$negate" == true && "$status" == "not_applicable" ]]; then
+    status="success"
   fi
 
   case "$status" in
@@ -414,15 +443,22 @@ print_message() {
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BGREEN}    ✔ Check passed for #${id}: ${title}${NC}"
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Expected pattern: '${expected}'${NC}"
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Command used    : '${command}'${NC}"
-    [[ $LOG_PRINT_ACTUAL_OUTPUT -eq 1 && $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Actual output   : '${output}'${NC}"
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 && $LOG_PRINT_ACTUAL_OUTPUT -eq 1 ]] && echo -e "${BYELLOW}      - Actual output   : '${output}'${NC}"
     return 0
     ;;
   failed)
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BRED}    ✖ Check failed for #${id}: ${title}${NC}"
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Expected pattern: '${expected}'${NC}"
     [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Command used    : '${command}'${NC}"
-    [[ $LOG_PRINT_ACTUAL_OUTPUT -eq 1 && $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Actual output   : '${output}'${NC}"
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 && $LOG_PRINT_ACTUAL_OUTPUT -eq 1 ]] && echo -e "${BYELLOW}      - Actual output   : '${output}'${NC}"
     return 1
+    ;;
+  not_applicable)
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BPURPLE}    ↷ Check not applicable for #${id}: ${title}${NC}"
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Expected pattern: '${expected}'${NC}"
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Command used    : '${command}'${NC}"
+    [[ $LOG_PRINT_DETAIL_CHECK -eq 1 ]] && echo -e "${BYELLOW}      - Actual output   : '${output}'${NC}"
+    return 3
     ;;
   error)
     echo -e "${BBLUE}   🍌 ERROR: for #${id}: ${title}${NC}"
@@ -443,8 +479,10 @@ usage() {
   echo "  -f,  --file                     ..."
   echo "  -wr, --wazuh-regex              ..."
   echo "  -wl, --wazuh-libs               ..."
+  echo "  -soc, --skip-os-check           ..."
   echo "  -pdc, --print-detail-check      ..."
   echo "  -pao, --print-actual-output     ..."
+  echo "  -psc, --print-section-count     ..."
 }
 
 # Function to parse command-line arguments
@@ -480,6 +518,9 @@ parse_args() {
       ;;
     -pao | --print-actual-output)
       LOG_PRINT_ACTUAL_OUTPUT=1
+      ;;
+    -psc | --print-section-count)
+      LOG_PRINT_SECTION_COUNT=1
       ;;
     *)
       echo "Unknown option: $key" >&2
