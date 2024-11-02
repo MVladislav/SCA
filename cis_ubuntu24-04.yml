@@ -1160,8 +1160,8 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - "c:dpkg-query -W -f='${binary:Package}\\t${Status}\\t${db:Status-Status}\\n' apparmor -> r:install\\s*\\t*ok\\s*\\t*installed"
-      - "c:dpkg-query -W -f='${binary:Package}\\t${Status}\\t${db:Status-Status}\\n' apparmor-utils -> r:install\\s*\\t*ok\\s*\\t*installed"
+      - "c:dpkg-query -s apparmor -> r:^Status: install ok installed"
+      - "c:dpkg-query -s apparmor-utils -> r:^Status: install ok installed"
 
   # 1.3.1.2 Ensure AppArmor is enabled in the bootloader configuration. (Automated)
   - id: 18539
@@ -1418,7 +1418,6 @@ checks:
     condition: all
     rules:
       - "c:dpkg-query -s prelink -> r:package 'prelink' is not installed"
-      - "c:dpkg-query -W -f='${binary:Package}\\t${Status}\\t${db:Status-Status}\\n' prelink -> r:unknown\\s*\\t*ok\\s*\\t*not-installed|no\\s*\\t*packages\\s*\\t*found\\s*\\t*matching"
 
   # 1.5.5 Ensure Automatic Error Reporting is not enabled. (Automated)
   - id: 18548
@@ -1606,7 +1605,6 @@ checks:
     condition: all
     rules:
       - c:dpkg-query -s gdm3 -> r:package 'gdm3' is not installed
-      - "c:dpkg-query -W -f='${binary:Package}\\t${Status}\\t${db:Status-Status}\\n' gdm3 -> r:unknown\\s*\\t*ok\\s*\\t*not-installed|no\\s*\\t*packages\\s*\\t*found\\s*\\t*matching"
 
   # 1.7.2 Ensure GDM login banner is configured. (Automated)
   - id: 18556
@@ -2341,9 +2339,9 @@ checks:
       - soc_2: ["CC6.3", "CC6.6"]
     condition: all
     rules:
-      - 'not c:ss -lntu -> r:\.+:25\s+ && r:127.0.0.\d*:25\s+|::1]:25\s+'
-      - 'not c:ss -lntu -> r:\.+:465\s+ && r:127.0.0.\d*:465\s+|::1]:465\s+'
-      - 'not c:ss -lntu -> r:\.+:587\s+ && r:127.0.0.\d*:587\s+|::1]:587\s+'
+      # TODO: not sure if this check make sense
+      - 'not c:ss -lntu -> r::25\s|:465\s|:587\s && r:\s+127.0.0.\d+:|\s+[::1]:'
+      # TODO: if below is not available the rule is not applicable
       - "not c:postconf -n inet_interfaces -> r:all|0.0.0.0|::1|loopback-only"
       - "not c:exim -bP local_interfaces -> r:all|0.0.0.0|::1|loopback-only"
       - "not f:/etc/mail/sendmail.cr -> r:0 DaemonPortOptions= && r:all|0.0.0.0|::1|loopback-only"
@@ -3063,8 +3061,8 @@ checks:
       - soc_2: ["CC6.3", "CC6.6"]
     condition: all
     rules:
-      - d:/etc/modprobe.d/ -> r:\..conf -> r:^install\s*\t*rds\s*\t*/bin/false
-      - d:/etc/modprobe.d/ -> r:\..conf -> r:^blacklist\s*\t*rds
+      - d:/etc/modprobe.d/ -> r:\.+.conf$ -> r:^install\s*\t*rds\s*\t*/bin/false
+      - d:/etc/modprobe.d/ -> r:\.+.conf$ -> r:^blacklist\s*\t*rds
       - c:modprobe -n -v rds -> r:^install /bin/false
       - not c:lsmod -> r:rds
 
@@ -3088,8 +3086,8 @@ checks:
       - soc_2: ["CC6.3", "CC6.6"]
     condition: all
     rules:
-      - d:/etc/modprobe.d/ -> r:\..conf -> r:^install\s*\t*sctp\s*\t*/bin/false
-      - d:/etc/modprobe.d/ -> r:\..conf -> r:^blacklist\s*\t*sctp
+      - d:/etc/modprobe.d/ -> r:\.+.conf$ -> r:^install\s*\t*sctp\s*\t*/bin/false
+      - d:/etc/modprobe.d/ -> r:\.+.conf$ -> r:^blacklist\s*\t*sctp
       - c:modprobe -n -v sctp -> r:^install /bin/false
       - not c:lsmod -> r:sctp
 
@@ -3839,7 +3837,7 @@ checks:
     condition: all
     rules:
       # TODO: not verified
-      - f:/etc/nftables.conf -> r:^include\s*"/etc/nftables.rules"
+      - f:/etc/nftables.conf -> r:^include && /etc/nftables.rules
 
   # 4.4.1.1 Ensure iptables packages are installed. (Automated)
   - id: 18644
@@ -4170,9 +4168,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0600'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?private\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0600''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
 
   # 5.1.3 Ensure permissions on SSH public host key files are configured. (Automated)
   - id: 18657
@@ -4203,9 +4201,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%#a\" {}" -> !r:^0644'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%U\" {}" -> !r:^root'
-      - 'not c:sh -c "file /etc/ssh/* | grep -iE \"openssh\\s+.*?public\\s+key\" | cut -d: -f1 | xargs -I {} stat -Lc \"%G\" {}" -> !r:^root'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0(644|640|600|604)''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
 
   # 5.1.4 Ensure sshd access is configured. (Automated)
   - id: 18658
@@ -4236,9 +4234,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: any
     rules:
-      - 'c:sshd -T -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
-      - 'f:/etc/ssh/sshd_config -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
-      - 'd:/etc/ssh/sshd_config.d -> r:\.* -> r:^\s*\t*Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
+      - 'c:sshd -T -> r:^Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
+      - 'f:/etc/ssh/sshd_config -> r:^Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
+      - 'd:/etc/ssh/sshd_config.d -> r:\.* -> r:^Allowusers\s*\t*\w+|^\s*\t*Denyusers\s*\t*\w+|^\s*\t*Allowgroups\s*\t*\w+|^\s*\t*Denygroups\s*\t*\w+'
 
   # 5.1.5 Ensure sshd Banner is configured. (Automated)
   - id: 18659
@@ -5112,7 +5110,7 @@ checks:
     condition: any
     rules:
       - f:/etc/security/pwquality.conf -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
-      - d:/etc/security/pwquality.conf.d -> r:\..conf -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
+      - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
 
   # 5.3.3.2.2 Ensure minimum password length is configured. (Automated)
   - id: 18695
@@ -5144,8 +5142,9 @@ checks:
       - soc_2: ["CC6.1"]
     condition: any
     rules:
-      - f:/etc/security/pwquality.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
-      - d:/etc/security/pwquality.conf.d -> r:\..conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
+      - c:cat /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
+      # - f:/etc/security/pwquality.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
+      # - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
 
   # 5.3.3.2.3 Ensure password complexity is configured. (Manual)
   - id: 18696
@@ -5179,7 +5178,6 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      # TODO: negative compare is not working
       - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^minclass\s*\t*=\s*\t*(\p*\d+) compare > 0
       - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^ucredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
       - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^lcredit\s*\t*=\s*\t*(\p*\d+) compare <= 0
@@ -5277,8 +5275,7 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - not f:/etc/security/pwquality.conf -> r:^dictcheck\s*\t*=\s*\t*0
-      - not d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^dictcheck\s*\t*=\s*\t*0
+      - not c:cat /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf -> r:^dictcheck\s*\t*=\s*\t*0
 
   # 5.3.3.2.7 Ensure password quality checking is enforced. (Automated)
   - id: 18700
@@ -5296,8 +5293,9 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - not f:/etc/security/pwquality.conf -> r:^enforcing\s*\t*=\s*\t*0
-      - not d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^enforcing\s*\t*=\s*\t*0
+      - not c:cat /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf -> r:^enforcing\s*\t*=\s*\t*0
+      # - not f:/etc/security/pwquality.conf -> r:^enforcing\s*\t*=\s*\t*0
+      # - not d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> r:^enforcing\s*\t*=\s*\t*0
 
   # 5.3.3.2.8 Ensure password quality is enforced for the root user. (Automated)
   - id: 18701
@@ -5316,7 +5314,7 @@ checks:
     condition: any
     rules:
       - f:/etc/security/pwquality.conf -> r:^enforce_for_root
-      - d:/etc/security/pwquality.conf.d -> r:\..conf -> r:^enforce_for_root
+      - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> r:^enforce_for_root
 
   # 5.3.3.3.1 Ensure password history remember is configured. (Automated)
   - id: 18702
@@ -5553,7 +5551,7 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - f:/etc/login.defs -> n:^PASS_MAX_DAYS\s*\t*(\d+) compare <= 365 && n:^PASS_MAX_DAYS\s*\t*(\d+) compare > 0
+      - 'f:/etc/login.defs -> n:^PASS_MAX_DAYS\s*\t*(\d+) compare <= 365 && n:^PASS_MAX_DAYS\s*\t*(\d+) compare > 0'
       - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare <= 365 && n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare > 0'
 
   # 5.4.1.2 Ensure minimum password days is configured. (Manual)
@@ -5987,9 +5985,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: all
+    condition: any
     rules:
-      - c:cat /etc/profile /etc/login.defs /etc/default/login /etc/profile.d/*.sh -> r:umask && r:027
+      - f:/etc/profile -> r:umask && r:027|0027
+      - f:/etc/login.defs -> r:umask && r:027|0027
+      - f:/etc/default/login -> r:umask && r:027|0027
+      - d:/etc/profile.d -> r:\.+.sh$ -> r:umask && r:027|0027
 
   # 6.1.1.1 Ensure journald service is enabled and active. (Automated)
   - id: 18726
@@ -6024,38 +6025,40 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:systemctl show systemd-journald.service -> r:^LoadState=loaded
+      - c:systemctl show systemd-journald.service -> r:^ActiveState=active
 
-  # 6.1.1.2 Ensure journald log file access is configured. (Manual)
-  - id: 18727
-    title: "Ensure journald log file access is configured."
-    description: "Journald will create logfiles that do not already exist on the system. This setting controls what permissions will be applied to these newly created files."
-    rationale: "It is important to ensure that log files have the correct permissions to ensure that sensitive data is archived and protected."
-    remediation: "If the default configuration is not appropriate for the site specific requirements, copy /usr/lib/tmpfiles.d/systemd.conf to /etc/tmpfiles.d/systemd.conf and modify as required. Recommended mode for logfiles is 0640 or more restrictive."
-    compliance:
-      - cis: ["6.1.1.2"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 6.1.1.2 Ensure journald log file access is configured. (Manual) - Not implemented
+  # - id: 18727
+  #   title: "Ensure journald log file access is configured."
+  #   description: "Journald will create logfiles that do not already exist on the system. This setting controls what permissions will be applied to these newly created files."
+  #   rationale: "It is important to ensure that log files have the correct permissions to ensure that sensitive data is archived and protected."
+  #   remediation: "If the default configuration is not appropriate for the site specific requirements, copy /usr/lib/tmpfiles.d/systemd.conf to /etc/tmpfiles.d/systemd.conf and modify as required. Recommended mode for logfiles is 0640 or more restrictive."
+  #   compliance:
+  #     - cis: ["6.1.1.2"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0007"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1083"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: none
+  #   rules: []
 
   # 6.1.1.3 Ensure journald log file rotation is configured. (Manual)
   - id: 18728
@@ -6090,8 +6093,13 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/systemd/journald.conf -> r:^SystemMaxUse\s*\t*=\s*\t*\d+
+      - f:/etc/systemd/journald.conf -> r:^SystemKeepFree\s*\t*=\s*\t*\d+
+      - f:/etc/systemd/journald.conf -> r:^RuntimeMaxUse\s*\t*=\s*\t*\d+
+      - f:/etc/systemd/journald.conf -> r:^RuntimeKeepFree\s*\t*=\s*\t*\d+
+      - f:/etc/systemd/journald.conf -> r:^MaxFileSec\s*\t*=\s*\t*\d+
 
   # 6.1.1.4 Ensure only one logging system is in use. (Automated)
   - id: 18729
@@ -6101,8 +6109,11 @@ checks:
     impact: "Transitioning from one logging service to another can be complex and time consuming, it involves reconfiguration and may result in data loss if not managed and reconfigured correctly."
     compliance:
       - cis: ["6.1.1.4"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      # NOTE: not clear defined by CIS
+      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare >= 1'
+      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare >= 1'
 
   # 6.1.2.1.1 Ensure systemd-journal-remote is installed. (Automated)
   - id: 18730
@@ -6137,8 +6148,9 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s systemd-journal-remote -> r:^Status: install ok installed"
 
   # 6.1.2.1.2 Ensure systemd-journal-upload authentication is configured. (Manual)
   - id: 18731
@@ -6173,8 +6185,12 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:cat /etc/systemd/journal-upload.conf /etc/systemd/journal-upload.conf.d/*.conf -> r:^URL\s*\t*=\s*\t*\w+
+      - c:cat /etc/systemd/journal-upload.conf /etc/systemd/journal-upload.conf.d/*.conf -> r:^ServerKeyFile\s*\t*=\s*\t*/\w+
+      - c:cat /etc/systemd/journal-upload.conf /etc/systemd/journal-upload.conf.d/*.conf -> r:^ServerCertificateFile\s*\t*=\s*\t*/\w+
+      - c:cat /etc/systemd/journal-upload.conf /etc/systemd/journal-upload.conf.d/*.conf -> r:^TrustedCertificateFile\s*\t*=\s*\t*/\w+
 
   # 6.1.2.1.3 Ensure systemd-journal-upload is enabled and active. (Automated)
   - id: 18732
@@ -6209,8 +6225,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:systemctl show systemd-journal-upload.service -> r:^LoadState=loaded
+      - c:systemctl show systemd-journal-upload.service -> r:^ActiveState=active
 
   # 6.1.2.1.4 Ensure systemd-journal-remote service is not in use. (Automated)
   - id: 18733
@@ -6230,8 +6248,9 @@ checks:
       - pci_dss_v3.2.1: ["1.1.6", "1.2.1", "2.2.2", "2.2.5"]
       - pci_dss_v4.0: ["1.2.5", "2.2.4", "6.4.1"]
       - soc_2: ["CC6.3", "CC6.6"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not c:systemctl show systemd-journal-remote.socket systemd-journal-remote.service -> r:^LoadState=loaded|^ActiveState=active
 
   # 6.1.2.2 Ensure journald ForwardToSyslog is disabled. (Automated)
   - id: 18734
@@ -6266,8 +6285,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - not c:systemctl show rsyslog.service -> r:^LoadState=loaded|^ActiveState=active
+      - f:/etc/systemd/journald.conf -> r:^ForwardToSyslog\s*\t*=\s*\t*no
 
   # 6.1.2.3 Ensure journald Compress is configured. (Automated)
   - id: 18735
@@ -6303,8 +6324,10 @@ checks:
             "6.4.2",
           ]
       - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - not c:systemctl show rsyslog.service -> r:^LoadState=loaded|^ActiveState=active
+      - f:/etc/systemd/journald.conf -> r:^Compress=\s*\t*=\s*\t*yes
 
   # 6.1.2.4 Ensure journald Storage is configured. (Automated)
   - id: 18736
@@ -6339,8 +6362,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - not c:systemctl show rsyslog.service -> r:^LoadState=loaded|^ActiveState=active
+      - f:/etc/systemd/journald.conf -> r:^Compress=\s*\t*=\s*\t*persistent
 
   # 6.1.3.1 Ensure rsyslog is installed. (Automated)
   - id: 18737
@@ -6375,8 +6400,9 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s rsyslog -> r:^Status: install ok installed"
 
   # 6.1.3.2 Ensure rsyslog service is enabled and active. (Automated)
   - id: 18738
@@ -6411,8 +6437,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:systemctl show rsyslog.service -> r:^LoadState=loaded
+      - c:systemctl show rsyslog.service -> r:^ActiveState=active
 
   # 6.1.3.3 Ensure journald is configured to send logs to rsyslog. (Automated)
   - id: 18739
@@ -6449,8 +6477,10 @@ checks:
             "6.4.2",
           ]
       - soc_2: ["PL1.4"]
-    condition: none
-    rules: []
+    condition: any
+    rules:
+      - c:systemctl show rsyslog.service -> r:^ActiveState=active
+      - f:/etc/systemd/journald.conf -> r:^ForwardToSyslog\s*\t*=\s*\t*yes
 
   # 6.1.3.4 Ensure rsyslog log file creation mode is configured. (Automated)
   - id: 18740
@@ -6504,82 +6534,83 @@ checks:
             "7.1",
           ]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:cat /etc/rsyslog.conf /etc/rsyslog.d/*.conf -> r:^\$FileCreateMode && r:0640|0600|0400
 
-  # 6.1.3.5 Ensure rsyslog logging is configured. (Manual)
-  - id: 18741
-    title: "Ensure rsyslog logging is configured."
-    description: "The rsyslog and configuration files specifies rules for logging and which files are to be used to log certain classes of messages."
-    rationale: "A great deal of important security-related information is sent via rsyslog (e.g., successful and failed su attempts, failed login attempts, root login attempts, etc.)."
-    remediation: "Edit the following lines in the configuration file(s) returned by the audit as appropriate for your environment. Note: The below configuration is shown for example purposes only. Due care should be given to how the organization wishes to store log data. *.emerg :omusrmsg:* auth,authpriv.* /var/log/secure mail.* -/var/log/mail mail.info -/var/log/mail.info mail.warning -/var/log/mail.warn mail.err /var/log/mail.err cron.* /var/log/cron *.=warning;*.=err -/var/log/warn *.crit /var/log/warn *.*;mail.none;news.none -/var/log/messages local0,local1.* -/var/log/localmessages local2,local3.* -/var/log/localmessages local4,local5.* -/var/log/localmessages local6,local7.* -/var/log/localmessages Run the following command to reload the rsyslogd configuration: # systemctl reload-or-restart rsyslog."
-    compliance:
-      - cis: ["6.1.3.5"]
-      - cis_csc_v8: ["8.2"]
-      - cis_csc_v7: ["6.2", "6.3"]
-      - cmmc_v2.0: ["AU.L2-3.3.1"]
-      - hipaa: ["164.312(b)"]
-      - iso_27001-2013: ["A.12.4.1"]
-      - mitre_mitigations: ["M1047"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1070", "T1070.002"]
-      - nist_sp_800-53: ["AU-7"]
-      - pci_dss_v3.2.1: ["10.2", "10.3"]
-      - pci_dss_v4.0:
-          [
-            "10.2.1",
-            "10.2.1.1",
-            "10.2.1.2",
-            "10.2.1.3",
-            "10.2.1.4",
-            "10.2.1.5",
-            "10.2.1.6",
-            "10.2.1.7",
-            "10.2.2",
-            "5.3.4",
-            "6.4.1",
-            "6.4.2",
-          ]
-    condition: none
-    rules: []
+  # # 6.1.3.5 Ensure rsyslog logging is configured. (Manual) - Not implemented
+  # - id: 18741
+  #   title: "Ensure rsyslog logging is configured."
+  #   description: "The rsyslog and configuration files specifies rules for logging and which files are to be used to log certain classes of messages."
+  #   rationale: "A great deal of important security-related information is sent via rsyslog (e.g., successful and failed su attempts, failed login attempts, root login attempts, etc.)."
+  #   remediation: "Edit the following lines in the configuration file(s) returned by the audit as appropriate for your environment. Note: The below configuration is shown for example purposes only. Due care should be given to how the organization wishes to store log data. *.emerg :omusrmsg:* auth,authpriv.* /var/log/secure mail.* -/var/log/mail mail.info -/var/log/mail.info mail.warning -/var/log/mail.warn mail.err /var/log/mail.err cron.* /var/log/cron *.=warning;*.=err -/var/log/warn *.crit /var/log/warn *.*;mail.none;news.none -/var/log/messages local0,local1.* -/var/log/localmessages local2,local3.* -/var/log/localmessages local4,local5.* -/var/log/localmessages local6,local7.* -/var/log/localmessages Run the following command to reload the rsyslogd configuration: # systemctl reload-or-restart rsyslog."
+  #   compliance:
+  #     - cis: ["6.1.3.5"]
+  #     - cis_csc_v8: ["8.2"]
+  #     - cis_csc_v7: ["6.2", "6.3"]
+  #     - cmmc_v2.0: ["AU.L2-3.3.1"]
+  #     - hipaa: ["164.312(b)"]
+  #     - iso_27001-2013: ["A.12.4.1"]
+  #     - mitre_mitigations: ["M1047"]
+  #     - mitre_tactics: ["TA0005"]
+  #     - mitre_techniques: ["T1070", "T1070.002"]
+  #     - nist_sp_800-53: ["AU-7"]
+  #     - pci_dss_v3.2.1: ["10.2", "10.3"]
+  #     - pci_dss_v4.0:
+  #         [
+  #           "10.2.1",
+  #           "10.2.1.1",
+  #           "10.2.1.2",
+  #           "10.2.1.3",
+  #           "10.2.1.4",
+  #           "10.2.1.5",
+  #           "10.2.1.6",
+  #           "10.2.1.7",
+  #           "10.2.2",
+  #           "5.3.4",
+  #           "6.4.1",
+  #           "6.4.2",
+  #         ]
+  #   condition: none
+  #   rules: []
 
-  # 6.1.3.6 Ensure rsyslog is configured to send logs to a remote log host. (Manual)
-  - id: 18742
-    title: "Ensure rsyslog is configured to send logs to a remote log host."
-    description: "rsyslog supports the ability to send log events it gathers to a remote log host or to receive messages from remote hosts, thus enabling centralized log management."
-    rationale: "Storing log data on a remote host protects log integrity from local attacks. If an attacker gains root access on the local system, they could tamper with or remove log data that is stored on the local system."
-    remediation: "Edit the rsyslog configuration and add the following line (where loghost.example.com is the name of your central log host). The target directive may either be a fully qualified domain name or an IP address. Example script to create a drop-in configuration file: #!/usr/bin/env bash { a_parameters=('*.* action(type=\"omfwd\" target=\"loghost.example.com\" port=\"514\" protocol=\"tcp\"' \\ ' action.resumeRetryCount=\"100\"' ' queue.type=\"LinkedList\" queue.size=\"1000\")') [ ! -d \"/etc/rsyslog.d/\" ] && mkdir /etc/rsyslod.d/ printf '%s\\n' \"\" \"${a_parameters[@]}\" >> /etc/rsyslog.d/60-rsyslog.conf } Run the following command to reload rsyslog.service: # systemctl reload-or-restart rsyslog.service."
-    references:
-      - "https://www.rsyslog.com/doc/"
-    compliance:
-      - cis: ["6.1.3.6"]
-      - cis_csc_v8: ["8.2"]
-      - cis_csc_v7: ["6.2", "6.3"]
-      - cmmc_v2.0: ["AU.L2-3.3.1"]
-      - hipaa: ["164.312(b)"]
-      - iso_27001-2013: ["A.12.4.1"]
-      - mitre_mitigations: ["M1029"]
-      - mitre_tactics: ["TA0040"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1562", "T1562.006"]
-      - nist_sp_800-53: ["AU-7"]
-      - pci_dss_v3.2.1: ["10.2", "10.3"]
-      - pci_dss_v4.0:
-          [
-            "10.2.1",
-            "10.2.1.1",
-            "10.2.1.2",
-            "10.2.1.3",
-            "10.2.1.4",
-            "10.2.1.5",
-            "10.2.1.6",
-            "10.2.1.7",
-            "10.2.2",
-            "5.3.4",
-            "6.4.1",
-            "6.4.2",
-          ]
-    condition: none
-    rules: []
+  # # 6.1.3.6 Ensure rsyslog is configured to send logs to a remote log host. (Manual) - Not implemented
+  # - id: 18742
+  #   title: "Ensure rsyslog is configured to send logs to a remote log host."
+  #   description: "rsyslog supports the ability to send log events it gathers to a remote log host or to receive messages from remote hosts, thus enabling centralized log management."
+  #   rationale: "Storing log data on a remote host protects log integrity from local attacks. If an attacker gains root access on the local system, they could tamper with or remove log data that is stored on the local system."
+  #   remediation: "Edit the rsyslog configuration and add the following line (where loghost.example.com is the name of your central log host). The target directive may either be a fully qualified domain name or an IP address. Example script to create a drop-in configuration file: #!/usr/bin/env bash { a_parameters=('*.* action(type=\"omfwd\" target=\"loghost.example.com\" port=\"514\" protocol=\"tcp\"' \\ ' action.resumeRetryCount=\"100\"' ' queue.type=\"LinkedList\" queue.size=\"1000\")') [ ! -d \"/etc/rsyslog.d/\" ] && mkdir /etc/rsyslod.d/ printf '%s\\n' \"\" \"${a_parameters[@]}\" >> /etc/rsyslog.d/60-rsyslog.conf } Run the following command to reload rsyslog.service: # systemctl reload-or-restart rsyslog.service."
+  #   references:
+  #     - "https://www.rsyslog.com/doc/"
+  #   compliance:
+  #     - cis: ["6.1.3.6"]
+  #     - cis_csc_v8: ["8.2"]
+  #     - cis_csc_v7: ["6.2", "6.3"]
+  #     - cmmc_v2.0: ["AU.L2-3.3.1"]
+  #     - hipaa: ["164.312(b)"]
+  #     - iso_27001-2013: ["A.12.4.1"]
+  #     - mitre_mitigations: ["M1029"]
+  #     - mitre_tactics: ["TA0040"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1562", "T1562.006"]
+  #     - nist_sp_800-53: ["AU-7"]
+  #     - pci_dss_v3.2.1: ["10.2", "10.3"]
+  #     - pci_dss_v4.0:
+  #         [
+  #           "10.2.1",
+  #           "10.2.1.1",
+  #           "10.2.1.2",
+  #           "10.2.1.3",
+  #           "10.2.1.4",
+  #           "10.2.1.5",
+  #           "10.2.1.6",
+  #           "10.2.1.7",
+  #           "10.2.2",
+  #           "5.3.4",
+  #           "6.4.1",
+  #           "6.4.2",
+  #         ]
+  #   condition: none
+  #   rules: []
 
   # 6.1.3.7 Ensure rsyslog is not configured to receive logs from a remote client. (Automated)
   - id: 18743
@@ -6601,57 +6632,59 @@ checks:
       - pci_dss_v3.2.1: ["1.1.6", "1.2.1", "2.2.2", "2.2.5"]
       - pci_dss_v4.0: ["1.2.5", "2.2.4", "6.4.1"]
       - soc_2: ["CC6.3", "CC6.6"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:cat /etc/rsyslog.conf /etc/rsyslog.d/*.conf -> r:^module\( && r:load= && r:imtcp'
+      - 'c:cat /etc/rsyslog.conf /etc/rsyslog.d/*.conf -> r:^input\( && r:type= && r:imtcp && r:port= && r:514'
 
-  # 6.1.3.8 Ensure logrotate is configured. (Manual)
-  - id: 18744
-    title: "Ensure logrotate is configured."
-    description: "The system includes the capability of rotating log files regularly to avoid filling up the system with logs or making the logs unmanageably large. The file /etc/logrotate.d/rsyslog is the configuration file used to rotate log files created by rsyslog."
-    rationale: "By keeping the log files smaller and more manageable, a system administrator can easily archive these files to another system and spend less time looking through inordinately large log files."
-    remediation: "Edit /etc/logrotate.conf, or the appropriate configuration file provided by the script in the Audit Procedure, as necessary to ensure logs are rotated according to site policy."
-    compliance:
-      - cis: ["6.1.3.8"]
-      - cis_csc_v8: ["8.3"]
-      - cis_csc_v7: ["6.4"]
-      - iso_27001-2013: ["A.12.4.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0040"]
-      - mitre_techniques: ["T1070", "T1070.002"]
-      - pci_dss_v3.2.1: ["10.7"]
-      - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+  # # 6.1.3.8 Ensure logrotate is configured. (Manual) - Not implemented
+  # - id: 18744
+  #   title: "Ensure logrotate is configured."
+  #   description: "The system includes the capability of rotating log files regularly to avoid filling up the system with logs or making the logs unmanageably large. The file /etc/logrotate.d/rsyslog is the configuration file used to rotate log files created by rsyslog."
+  #   rationale: "By keeping the log files smaller and more manageable, a system administrator can easily archive these files to another system and spend less time looking through inordinately large log files."
+  #   remediation: "Edit /etc/logrotate.conf, or the appropriate configuration file provided by the script in the Audit Procedure, as necessary to ensure logs are rotated according to site policy."
+  #   compliance:
+  #     - cis: ["6.1.3.8"]
+  #     - cis_csc_v8: ["8.3"]
+  #     - cis_csc_v7: ["6.4"]
+  #     - iso_27001-2013: ["A.12.4.1"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0040"]
+  #     - mitre_techniques: ["T1070", "T1070.002"]
+  #     - pci_dss_v3.2.1: ["10.7"]
+  #     - soc_2: ["A1.1"]
+  #   condition: none
+  #   rules: []
 
-  # 6.1.4.1 Ensure access to all logfiles has been configured. (Automated)
-  - id: 18745
-    title: "Ensure access to all logfiles has been configured."
-    description: "Log files contain information from many services on the the local system, or in the event of a centralized log server, others systems logs as well. In general log files are found in /var/log/, although application can be configured to store logs elsewhere. Should your application store logs in another, ensure to run the same test on that location."
-    rationale: "It is important that log files have the correct permissions to ensure that sensitive data is protected and that only the appropriate users / groups have access to them."
-    remediation: "Run the following script to update permissions and ownership on files in /var/log. Although the script is not destructive, ensure that the output of the audit procedure is captured in the event that the remediation causes issues. #!/usr/bin/env bash { a_output2=() f_file_test_fix() { a_out2=() maxperm=\"$( printf '%o' $(( 0777 & ~$perm_mask)) )\" if [ $(( $l_mode & $perm_mask )) -gt 0 ]; then a_out2+=(\" o Mode: \\\"$l_mode\\\" should be \\\"$maxperm\\\" or more restrictive\" \" x Removing excess permissions\") chmod \"$l_rperms\" \"$l_fname\" fi if [[ ! \"$l_user\" =~ $l_auser ]]; then a_out2+=(\" o Owned by: \\\"$l_user\\\" and should be owned by \\\"${l_auser//|/ or }\\\"\" \" x Changing ownership to: \\\"$l_fix_account\\\"\") chown \"$l_fix_account\" \"$l_fname\" fi if [[ ! \"$l_group\" =~ $l_agroup ]]; then a_out2+=(\" o Group owned by: \\\"$l_group\\\" and should be group owned by \\\"${l_agroup//|/ or }\\\"\" \" x Changing group ownership to: \\\"$l_fix_account\\\"\") chgrp \"$l_fix_account\" \"$l_fname\" fi [ \"${#a_out2[@]}\" -gt 0 ] && a_output2+=(\" - File: \\\"$l_fname\\\" is:\" \"${a_out2[@]}\") } l_fix_account='root' while IFS= read -r -d $'\\0' l_file; do while IFS=: read -r l_fname l_mode l_user l_group; do if grep -Pq -- '\\/(apt)\\h*$' <<< \"$(dirname \"$l_fname\")\"; then perm_mask='0133' l_rperms=\"u-x,go-wx\" l_auser=\"root\" l_agroup=\"(root|adm)\"; f_file_test_fix else case \"$(basename \"$l_fname\")\" in lastlog | lastlog.* | wtmp | wtmp.* | wtmp-* | btmp | btmp.* | btmp-* | README) perm_mask='0113' l_rperms=\"ug-x,o-wx\" l_auser=\"root\" l_agroup=\"(root|utmp)\" f_file_test_fix ;; cloud-init.log* | localmessages* | waagent.log*) perm_mask='0133' l_rperms=\"u-x,go-wx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" file_test_fix ;; secure | auth.log | syslog | messages) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" f_file_test_fix ;; SSSD | sssd) perm_mask='0117' l_rperms=\"ug-x,o-rwx\" l_auser=\"(root|SSSD)\" l_agroup=\"(root|SSSD)\" f_file_test_fix ;; gdm | gdm3) perm_mask='0117' l_rperms=\"ug-x,o-rwx\" l_auser=\"root\" l_agroup=\"(root|gdm|gdm3)\" f_file_test_fix ;; *.journal | *.journal~) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"root\" l_agroup=\"(root|systemd-journal)\" f_file_test_fix ;; *) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" if [ \"$l_user\" = \"root\" ] || ! grep -Pq -- \"^\\h*$(awk -F: '$1==\"'\"$l_user\"'\" {print $7}' /etc/passwd)\\b\" /etc/shells; then ! grep -Pq -- \"$l_auser\" <<< \"$l_user\" && l_auser=\"(root|syslog|$l_user)\" ! grep -Pq -- \"$l_agroup\" <<< \"$l_group\" && l_agroup=\"(root|adm|$l_group)\" fi f_file_test_fix ;; esac fi done < <(stat -Lc '%n:%#a:%U:%G' \"$l_file\") done < <(find -L /var/log -type f \\( -perm /0137 -o ! -user root -o ! - group root \\) -print0) if [ \"${#a_output2[@]}\" -le 0 ]; then # If all files passed, then we report no changes a_output+=(\" - All files in \\\"/var/log/\\\" have appropriate permissions and ownership\") printf '\\n%s' \"- All files in \\\"/var/log/\\\" have appropriate permissions and ownership\" \" o No changes required\" \"\" else printf '\\n%s' \"${a_output2[@]}\" \"\" fi } Note: You may also need to change the configuration for your logging software or services for any logs that had incorrect permissions. If there are services that log to other locations, ensure that those log files have the appropriate permissions."
-    compliance:
-      - cis: ["6.1.4.1"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1028"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 6.1.4.1 Ensure access to all logfiles has been configured. (Automated) - Not implemented
+  # - id: 18745
+  #   title: "Ensure access to all logfiles has been configured."
+  #   description: "Log files contain information from many services on the the local system, or in the event of a centralized log server, others systems logs as well. In general log files are found in /var/log/, although application can be configured to store logs elsewhere. Should your application store logs in another, ensure to run the same test on that location."
+  #   rationale: "It is important that log files have the correct permissions to ensure that sensitive data is protected and that only the appropriate users / groups have access to them."
+  #   remediation: "Run the following script to update permissions and ownership on files in /var/log. Although the script is not destructive, ensure that the output of the audit procedure is captured in the event that the remediation causes issues. #!/usr/bin/env bash { a_output2=() f_file_test_fix() { a_out2=() maxperm=\"$( printf '%o' $(( 0777 & ~$perm_mask)) )\" if [ $(( $l_mode & $perm_mask )) -gt 0 ]; then a_out2+=(\" o Mode: \\\"$l_mode\\\" should be \\\"$maxperm\\\" or more restrictive\" \" x Removing excess permissions\") chmod \"$l_rperms\" \"$l_fname\" fi if [[ ! \"$l_user\" =~ $l_auser ]]; then a_out2+=(\" o Owned by: \\\"$l_user\\\" and should be owned by \\\"${l_auser//|/ or }\\\"\" \" x Changing ownership to: \\\"$l_fix_account\\\"\") chown \"$l_fix_account\" \"$l_fname\" fi if [[ ! \"$l_group\" =~ $l_agroup ]]; then a_out2+=(\" o Group owned by: \\\"$l_group\\\" and should be group owned by \\\"${l_agroup//|/ or }\\\"\" \" x Changing group ownership to: \\\"$l_fix_account\\\"\") chgrp \"$l_fix_account\" \"$l_fname\" fi [ \"${#a_out2[@]}\" -gt 0 ] && a_output2+=(\" - File: \\\"$l_fname\\\" is:\" \"${a_out2[@]}\") } l_fix_account='root' while IFS= read -r -d $'\\0' l_file; do while IFS=: read -r l_fname l_mode l_user l_group; do if grep -Pq -- '\\/(apt)\\h*$' <<< \"$(dirname \"$l_fname\")\"; then perm_mask='0133' l_rperms=\"u-x,go-wx\" l_auser=\"root\" l_agroup=\"(root|adm)\"; f_file_test_fix else case \"$(basename \"$l_fname\")\" in lastlog | lastlog.* | wtmp | wtmp.* | wtmp-* | btmp | btmp.* | btmp-* | README) perm_mask='0113' l_rperms=\"ug-x,o-wx\" l_auser=\"root\" l_agroup=\"(root|utmp)\" f_file_test_fix ;; cloud-init.log* | localmessages* | waagent.log*) perm_mask='0133' l_rperms=\"u-x,go-wx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" file_test_fix ;; secure | auth.log | syslog | messages) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" f_file_test_fix ;; SSSD | sssd) perm_mask='0117' l_rperms=\"ug-x,o-rwx\" l_auser=\"(root|SSSD)\" l_agroup=\"(root|SSSD)\" f_file_test_fix ;; gdm | gdm3) perm_mask='0117' l_rperms=\"ug-x,o-rwx\" l_auser=\"root\" l_agroup=\"(root|gdm|gdm3)\" f_file_test_fix ;; *.journal | *.journal~) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"root\" l_agroup=\"(root|systemd-journal)\" f_file_test_fix ;; *) perm_mask='0137' l_rperms=\"u-x,g-wx,o-rwx\" l_auser=\"(root|syslog)\" l_agroup=\"(root|adm)\" if [ \"$l_user\" = \"root\" ] || ! grep -Pq -- \"^\\h*$(awk -F: '$1==\"'\"$l_user\"'\" {print $7}' /etc/passwd)\\b\" /etc/shells; then ! grep -Pq -- \"$l_auser\" <<< \"$l_user\" && l_auser=\"(root|syslog|$l_user)\" ! grep -Pq -- \"$l_agroup\" <<< \"$l_group\" && l_agroup=\"(root|adm|$l_group)\" fi f_file_test_fix ;; esac fi done < <(stat -Lc '%n:%#a:%U:%G' \"$l_file\") done < <(find -L /var/log -type f \\( -perm /0137 -o ! -user root -o ! - group root \\) -print0) if [ \"${#a_output2[@]}\" -le 0 ]; then # If all files passed, then we report no changes a_output+=(\" - All files in \\\"/var/log/\\\" have appropriate permissions and ownership\") printf '\\n%s' \"- All files in \\\"/var/log/\\\" have appropriate permissions and ownership\" \" o No changes required\" \"\" else printf '\\n%s' \"${a_output2[@]}\" \"\" fi } Note: You may also need to change the configuration for your logging software or services for any logs that had incorrect permissions. If there are services that log to other locations, ensure that those log files have the appropriate permissions."
+  #   compliance:
+  #     - cis: ["6.1.4.1"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1028"]
+  #     - mitre_tactics: ["TA0007"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1083"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: none
+  #   rules: []
 
   # 6.2.1.1 Ensure auditd packages are installed. (Automated)
   - id: 18746
@@ -6672,8 +6705,10 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s auditd -> r:^Status: install ok installed"
+      - "c:dpkg-query -s audispd-plugins -> r:^Status: install ok installed"
 
   # 6.2.1.2 Ensure auditd service is enabled and active. (Automated)
   - id: 18747
@@ -6708,8 +6743,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:systemctl show auditd.service -> r:^LoadState=loaded
+      - c:systemctl show auditd.service -> r:^ActiveState=active
 
   # 6.2.1.3 Ensure auditing for processes that start prior to auditd is enabled. (Automated)
   - id: 18748
@@ -6744,8 +6781,9 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/boot/grub/grub.cfg -> r:^\s*\t*linux && r:audit=1
 
   # 6.2.1.4 Ensure audit_backlog_limit is sufficient. (Automated)
   - id: 18749
@@ -6780,8 +6818,9 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/boot/grub/grub.cfg -> r:^\s*\t*linux && n:audit_backlog_limit=(\d+) compare >= 8192
 
   # 6.2.2.1 Ensure audit log storage size is configured. (Automated)
   - id: 18750
@@ -6799,8 +6838,9 @@ checks:
       - mitre_techniques: ["T1562", "T1562.006"]
       - pci_dss_v3.2.1: ["10.7"]
       - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/audit/auditd.conf -> r:max_log_file\s*\t*=\s*\t*\d+
 
   # 6.2.2.2 Ensure audit logs are not automatically deleted. (Automated)
   - id: 18751
@@ -6818,8 +6858,9 @@ checks:
       - mitre_techniques: ["T1562", "T1562.006"]
       - pci_dss_v3.2.1: ["10.7"]
       - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/audit/auditd.conf -> r:max_log_file_action\s*\t*=\s*\t*keep_logs
 
   # 6.2.2.3 Ensure system is disabled when audit logs are full. (Automated)
   - id: 18752
@@ -6854,8 +6895,10 @@ checks:
             "6.4.2",
           ]
       - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/audit/auditd.conf -> r:disk_full_action\s*\t*= && r:halt|single
+      - f:/etc/audit/auditd.conf -> r:disk_error_action\s*\t*= && r:syslog|single|halt
 
   # 6.2.2.4 Ensure system warns when audit logs are low on space. (Automated)
   - id: 18753
@@ -6891,8 +6934,10 @@ checks:
             "6.4.2",
           ]
       - soc_2: ["A1.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/audit/auditd.conf -> r:space_left_action\s*\t*= && r:email|exec|single|halt
+      - f:/etc/audit/auditd.conf -> r:admin_space_left_action\s*\t*= && r:single|halt
 
   # 6.2.3.1 Ensure changes to system administration scope (sudoers) is collected. (Automated)
   - id: 18754
@@ -6913,8 +6958,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-w && r:/etc/sudoers && r:-p wa && r:-k scope
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-w && r:/etc/sudoers.d && r:-p wa && r:-k scope
+      - c:auditctl -l -> r:^-w && r:/etc/sudoers && r:-p wa && r:-k scope
+      - c:auditctl -l -> r:^-w && r:/etc/sudoers.d && r:-p wa && r:-k scope
 
   # 6.2.3.2 Ensure actions as another user are always logged. (Automated)
   - id: 18755
@@ -6935,8 +6984,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-a && r:exit,always|always,exit && r:-F arch=b64 && r:-C euid!=uid|-C uid!=euid && r:-F auid!=unset|auid!=-1|-F unset!=auid && r:-S execve && r:-k user_emulation|-F key=user_emulation
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-a && r:exit,always|always,exit && r:-F arch=b32 && r:-C euid!=uid|-C uid!=euid && r:-F auid!=unset|auid!=-1|-F unset!=auid && r:-S execve && r:-k user_emulation|-F key=user_emulation
+      - c:auditctl -l -> r:^-a && r:exit,always|always,exit && r:-F arch=b64 && r:-C euid!=uid|-C uid!=euid && r:-F auid!=unset|auid!=-1|-F unset!=auid && r:-S execve && r:-k user_emulation|-F key=user_emulation
+      - c:auditctl -l -> r:^-a && r:exit,always|always,exit && r:-F arch=b32 && r:-C euid!=uid|-C uid!=euid && r:-F auid!=unset|auid!=-1|-F unset!=auid && r:-S execve && r:-k user_emulation|-F key=user_emulation
 
   # 6.2.3.3 Ensure events that modify the sudo log file are collected. (Automated)
   - id: 18756
@@ -6956,8 +7009,10 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-w && r:/var/log/sudo.log && r:-p wa && r:-k sudo_log_file
+      - c:auditctl -l -> r:^-w && r:/var/log/sudo.log && r:-p wa && r:-k sudo_log_file
 
   # 6.2.3.4 Ensure events that modify date and time information are collected. (Automated)
   - id: 18757
@@ -6978,8 +7033,18 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:adjtimex,settimeofday|settimeofday,adjtimex
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:adjtimex,settimeofday|settimeofday,adjtimex
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S clock_settime && r:-F a0=0x0
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S clock_settime && r:-F a0=0x0
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k time-change|-F key=time-change && r:^-w && r:/etc/localtime && r:-p wa
+      - c:auditctl -l -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:adjtimex,settimeofday|settimeofday,adjtimex
+      - c:auditctl -l -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:adjtimex,settimeofday|settimeofday,adjtimex
+      - c:auditctl -l -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S clock_settime && r:-F a0=0x0
+      - c:auditctl -l -> r:-k time-change|-F key=time-change && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S clock_settime && r:-F a0=0x0
+      - c:auditctl -l -> r:-k time-change|-F key=time-change && r:^-w && r:/etc/localtime && r:-p wa
 
   # 6.2.3.5 Ensure events that modify the system's network environment are collected. (Automated)
   - id: 18758
@@ -7002,31 +7067,47 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-a && r:exit,always|always,exit && r:-F arch=b64 && r:-S && r:sethostname,setdomainname|setdomainname,sethostname
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-a && r:exit,always|always,exit && r:-F arch=b32 && r:-S && r:sethostname,setdomainname|setdomainname,sethostname
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/issue && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/issue.net && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/hosts && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/networks && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/network && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/netplan && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-a && r:exit,always|always,exit && r:-F arch=b64 && r:-S && r:sethostname,setdomainname|setdomainname,sethostname
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-a && r:exit,always|always,exit && r:-F arch=b32 && r:-S && r:sethostname,setdomainname|setdomainname,sethostname
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/issue && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/issue.net && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/hosts && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/networks && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/network && r:-p wa
+      - c:auditctl -l -> r:-k system-locale|-F key=system-locale && r:^-w && r:/etc/netplan && r:-p wa
 
-  # 6.2.3.6 Ensure use of privileged commands are collected. (Automated)
-  - id: 18759
-    title: "Ensure use of privileged commands are collected."
-    description: "Monitor privileged programs, those that have the setuid and/or setgid bit set on execution, to determine if unprivileged users are running these commands."
-    rationale: "Execution of privileged commands by non-privileged users could be an indication of someone trying to gain unauthorized access to the system."
-    impact: 'Both the audit and remediation section of this recommendation will traverse all mounted file systems that is not mounted with either noexec or nosuid mount options. If there are large file systems without these mount options, such traversal will be significantly detrimental to the performance of the system. Before running either the audit or remediation section, inspect the output of the following command to determine exactly which file systems will be traversed: # findmnt -n -l -k -it $(awk ''/nodev/ { print $2 }'' /proc/filesystems | paste -sd,) | grep -Pv "noexec|nosuid" To exclude a particular file system due to adverse performance impacts, update the audit and remediation sections by adding a sufficiently unique string to the grep statement. The above command can be used to test the modified exclusions.'
-    remediation: "Edit or create a file in the /etc/audit/rules.d/ directory, ending in .rules extension, with the relevant rules to monitor the use of privileged commands. Example script: #!/usr/bin/env bash { UID_MIN=$(awk '/^\\s*UID_MIN/{print $2}' /etc/login.defs) AUDIT_RULE_FILE=\"/etc/audit/rules.d/50-privileged.rules\" NEW_DATA=() for PARTITION in $(findmnt -n -l -k -it $(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,) | grep -Pv \"noexec|nosuid\" | awk '{print $1}'); do readarray -t DATA < <(find \"${PARTITION}\" -xdev -perm /6000 -type f | awk -v UID_MIN=${UID_MIN} '{print \"-a always,exit -F path=\" $1 \" -F perm=x -F auid>=\"UID_MIN\" -F auid!=unset -k privileged\" }') for ENTRY in \"${DATA[@]}\"; do NEW_DATA+=(\"${ENTRY}\") done done readarray &> /dev/null -t OLD_DATA < \"${AUDIT_RULE_FILE}\" COMBINED_DATA=( \"${OLD_DATA[@]}\" \"${NEW_DATA[@]}\" ) printf '%s\\n' \"${COMBINED_DATA[@]}\" | sort -u > \"${AUDIT_RULE_FILE}\" } Merge and load the rules into active configuration: # augenrules --load Check if reboot is required. # if [[ $(auditctl -s | grep \"enabled\") =~ \"2\" ]]; then printf \"Reboot required to load rules\\n\"; fi Special mount points If there are any special mount points that are not visible by default from just scanning /, change the PARTITION variable to the appropriate partition and re-run the remediation."
-    compliance:
-      - cis: ["6.2.3.6"]
-      - cis_csc_v8: ["8.5"]
-      - cis_csc_v7: ["6.2"]
-      - cmmc_v2.0: ["AU.L2-3.3.1"]
-      - iso_27001-2013: ["A.12.4.1"]
-      - mitre_mitigations: ["M1026"]
-      - mitre_tactics: ["TA0002"]
-      - mitre_techniques: ["T1562", "T1562.006"]
-      - nist_sp_800-53: ["AU-3(1)", "AU-7"]
-      - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
-      - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
-      - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+  # # 6.2.3.6 Ensure use of privileged commands are collected. (Automated) - Not implemented
+  # - id: 18759
+  #   title: "Ensure use of privileged commands are collected."
+  #   description: "Monitor privileged programs, those that have the setuid and/or setgid bit set on execution, to determine if unprivileged users are running these commands."
+  #   rationale: "Execution of privileged commands by non-privileged users could be an indication of someone trying to gain unauthorized access to the system."
+  #   impact: 'Both the audit and remediation section of this recommendation will traverse all mounted file systems that is not mounted with either noexec or nosuid mount options. If there are large file systems without these mount options, such traversal will be significantly detrimental to the performance of the system. Before running either the audit or remediation section, inspect the output of the following command to determine exactly which file systems will be traversed: # findmnt -n -l -k -it $(awk ''/nodev/ { print $2 }'' /proc/filesystems | paste -sd,) | grep -Pv "noexec|nosuid" To exclude a particular file system due to adverse performance impacts, update the audit and remediation sections by adding a sufficiently unique string to the grep statement. The above command can be used to test the modified exclusions.'
+  #   remediation: "Edit or create a file in the /etc/audit/rules.d/ directory, ending in .rules extension, with the relevant rules to monitor the use of privileged commands. Example script: #!/usr/bin/env bash { UID_MIN=$(awk '/^\\s*UID_MIN/{print $2}' /etc/login.defs) AUDIT_RULE_FILE=\"/etc/audit/rules.d/50-privileged.rules\" NEW_DATA=() for PARTITION in $(findmnt -n -l -k -it $(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,) | grep -Pv \"noexec|nosuid\" | awk '{print $1}'); do readarray -t DATA < <(find \"${PARTITION}\" -xdev -perm /6000 -type f | awk -v UID_MIN=${UID_MIN} '{print \"-a always,exit -F path=\" $1 \" -F perm=x -F auid>=\"UID_MIN\" -F auid!=unset -k privileged\" }') for ENTRY in \"${DATA[@]}\"; do NEW_DATA+=(\"${ENTRY}\") done done readarray &> /dev/null -t OLD_DATA < \"${AUDIT_RULE_FILE}\" COMBINED_DATA=( \"${OLD_DATA[@]}\" \"${NEW_DATA[@]}\" ) printf '%s\\n' \"${COMBINED_DATA[@]}\" | sort -u > \"${AUDIT_RULE_FILE}\" } Merge and load the rules into active configuration: # augenrules --load Check if reboot is required. # if [[ $(auditctl -s | grep \"enabled\") =~ \"2\" ]]; then printf \"Reboot required to load rules\\n\"; fi Special mount points If there are any special mount points that are not visible by default from just scanning /, change the PARTITION variable to the appropriate partition and re-run the remediation."
+  #   compliance:
+  #     - cis: ["6.2.3.6"]
+  #     - cis_csc_v8: ["8.5"]
+  #     - cis_csc_v7: ["6.2"]
+  #     - cmmc_v2.0: ["AU.L2-3.3.1"]
+  #     - iso_27001-2013: ["A.12.4.1"]
+  #     - mitre_mitigations: ["M1026"]
+  #     - mitre_tactics: ["TA0002"]
+  #     - mitre_techniques: ["T1562", "T1562.006"]
+  #     - nist_sp_800-53: ["AU-3(1)", "AU-7"]
+  #     - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
+  #     - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
+  #     - soc_2: ["CC5.2", "CC7.2"]
+  #   condition: none
+  #   rules: []
 
   # 6.2.3.7 Ensure unsuccessful file access attempts are collected. (Automated)
   - id: 18760
@@ -7047,8 +7128,16 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EACCES && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EACCES && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EPERM && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EPERM && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EACCES && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EACCES && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EPERM && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k access|-F key=access && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:creat && r:open && r:openat && r:truncate && r:ftruncate && r:-F exit=-EPERM && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.8 Ensure events that modify user/group information are collected. (Automated)
   - id: 18761
@@ -7072,8 +7161,24 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/group && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/passwd && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/gshadow && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/shadow && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/security/opasswd && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/nsswitch.conf && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/pam.conf && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k identity|-F key=identity && r:^-w && r:/etc/pam.d && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/group && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/passwd && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/gshadow && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/shadow && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/security/opasswd && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/nsswitch.conf && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/pam.conf && r:-p wa
+      - c:auditctl -l -> r:-k identity|-F key=identity && r:^-w && r:/etc/pam.d && r:-p wa
 
   # 6.2.3.9 Ensure discretionary access control permission modification events are collected. (Automated)
   - id: 18762
@@ -7094,8 +7199,20 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:chmod && r:fchmod && r:fchmodat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:chown && r:fchown && r:lchown && r:fchownat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:chmod && r:fchmod && r:fchmodat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:lchown && r:fchown && r:chown && r:fchownat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:setxattr && r:lsetxattr && r:fsetxattr && r:removexattr && r:lremovexattr && r:fremovexattr && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:setxattr && r:lsetxattr && r:fsetxattr && r:removexattr && r:lremovexattr && r:fremovexattr && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:chmod && r:fchmod && r:fchmodat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:chown && r:fchown && r:lchown && r:fchownat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:chmod && r:fchmod && r:fchmodat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:lchown && r:fchown && r:chown && r:fchownat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:setxattr && r:lsetxattr && r:fsetxattr && r:removexattr && r:lremovexattr && r:fremovexattr && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_mod|-F key=perm_mod && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:setxattr && r:lsetxattr && r:fsetxattr && r:removexattr && r:lremovexattr && r:fremovexattr && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.10 Ensure successful file system mounts are collected. (Automated)
   - id: 18763
@@ -7116,8 +7233,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k mounts|-F key=mounts && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S mount && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k mounts|-F key=mounts && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S mount && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k mounts|-F key=mounts && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S mount && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k mounts|-F key=mounts && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S mount && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.11 Ensure session initiation information is collected. (Automated)
   - id: 18764
@@ -7138,8 +7259,15 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      # TODO: this fails for me, but not clear why
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k session|-F key=session && r:^-w r:/var/run/utmp && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k session|-F key=session && r:^-w r:/var/log/wtmp && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k session|-F key=session && r:^-w r:/var/log/btmp && r:-p wa
+      - c:auditctl -l -> r:-k session|-F key=session && r:^-w r:/var/run/utmp && r:-p wa
+      - c:auditctl -l -> r:-k session|-F key=session && r:^-w r:/var/log/wtmp && r:-p wa
+      - c:auditctl -l -> r:-k session|-F key=session && r:^-w r:/var/log/btmp && r:-p wa
 
   # 6.2.3.12 Ensure login and logout events are collected. (Automated)
   - id: 18765
@@ -7160,8 +7288,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k logins|-F key=logins && r:^-w && r:/var/log/lastlog && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k logins|-F key=logins && r:^-w && r:/var/run/faillock && r:-p wa
+      - c:auditctl -l -> r:-k logins|-F key=logins && r:^-w && r:/var/log/lastlog && r:-p wa
+      - c:auditctl -l -> r:-k logins|-F key=logins && r:^-w && r:/var/run/faillock && r:-p wa
 
   # 6.2.3.13 Ensure file deletion events by users are collected. (Automated)
   - id: 18766
@@ -7182,8 +7314,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k delete|-F key=delete && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:unlink && r:unlinkat && r:rename && r:renameat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k delete|-F key=delete && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:unlink && r:unlinkat && r:rename && r:renameat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k delete|-F key=delete && r:^-a && r:always,exit|exit,always && r:-F arch=b64 && r:-S && r:unlink && r:unlinkat && r:rename && r:renameat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k delete|-F key=delete && r:^-a && r:always,exit|exit,always && r:-F arch=b32 && r:-S && r:unlink && r:unlinkat && r:rename && r:renameat && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.14 Ensure events that modify the system's Mandatory Access Controls are collected. (Automated)
   - id: 18767
@@ -7204,8 +7340,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k MAC-policy|-F key=MAC-policy && r:^-w && r:/etc/apparmor && r:-p wa
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k MAC-policy|-F key=MAC-policy && r:^-w && r:/etc/apparmor.d && r:-p wa
+      - c:auditctl -l -> r:-k MAC-policy|-F key=MAC-policy && r:^-w && r:/etc/apparmor && r:-p wa
+      - c:auditctl -l -> r:-k MAC-policy|-F key=MAC-policy && r:^-w && r:/etc/apparmor.d && r:-p wa
 
   # 6.2.3.15 Ensure successful and unsuccessful attempts to use the chcon command are collected. (Automated)
   - id: 18768
@@ -7240,8 +7380,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/chcon && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/chcon && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.16 Ensure successful and unsuccessful attempts to use the setfacl command are collected. (Automated)
   - id: 18769
@@ -7276,8 +7418,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/setfacl && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|auid!=-1
+      - c:auditctl -l -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/setfacl && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.17 Ensure successful and unsuccessful attempts to use the chacl command are collected. (Automated)
   - id: 18770
@@ -7312,8 +7456,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/chacl && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k perm_chng|-F key=perm_chng && r:^-a && r:always,exit|exit,always && r:-F path=/usr/bin/chacl && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.18 Ensure successful and unsuccessful attempts to use the usermod command are collected. (Automated)
   - id: 18771
@@ -7348,8 +7494,10 @@ checks:
             "6.4.1",
             "6.4.2",
           ]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k usermod|-F key=usermod && r:^-a && r:always,exit|exit,always && r:-F path=/usr/sbin/usermod && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k usermod|-F key=usermod && r:^-a && r:always,exit|exit,always && r:-F path=/usr/sbin/usermod && r:-F perm=x && r:-F auid>=\d+ && r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.19 Ensure kernel module loading unloading and modification is collected. (Automated)
   - id: 18772
@@ -7370,8 +7518,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k kernel_modules|-F key=kernel_modules r:^-a r:always,exit|exit,always r:-F arch=b64 r:-S r:init_module r:finit_module r:delete_module r:create_module r:query_module r:-F auid>=\d+ r:-F auid!=unset|-F auid!=-1
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:-k kernel_modules|-F key=kernel_modules r:^-a r:always,exit|exit,always r:-F path=/usr/bin/kmod r:-F perm=x r:-F auid>=\d+ r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k kernel_modules|-F key=kernel_modules r:^-a r:always,exit|exit,always r:-F arch=b64 r:-S r:init_module r:finit_module r:delete_module r:create_module r:query_module r:-F auid>=\d+ r:-F auid!=unset|-F auid!=-1
+      - c:auditctl -l -> r:-k kernel_modules|-F key=kernel_modules r:^-a r:always,exit|exit,always r:-F path=/usr/bin/kmod r:-F perm=x r:-F auid>=\d+ r:-F auid!=unset|-F auid!=-1
 
   # 6.2.3.20 Ensure the audit configuration is immutable. (Automated)
   - id: 18773
@@ -7413,8 +7565,9 @@ checks:
       - pci_dss_v4.0:
           ["1.3.1", "10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "7.1", "9.4.5"]
       - soc_2: ["CC5.2", "CC6.1", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - d:/etc/audit/rules.d -> r:\.+.rules$ -> r:^-e\s*\t*2
 
   # 6.2.3.21 Ensure the running and on disk configuration is the same. (Manual)
   - id: 18774
@@ -7432,68 +7585,69 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:augenrules --check -> r:augenrules: && r:No\s*\t*change'
 
-  # 6.2.4.1 Ensure audit log files mode is configured. (Automated)
-  - id: 18775
-    title: "Ensure audit log files mode is configured."
-    description: "Audit log files contain information about the system and system activity."
-    rationale: "Access to audit records can reveal system and configuration data to attackers, potentially compromising its confidentiality."
-    remediation: "Run the following command to remove more permissive mode than 0640 from audit log files: # [ -f /etc/audit/auditd.conf ] && find \"$(dirname $(awk -F \"=\" '/^\\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))\" -type f -perm /0137 -exec chmod u-x,g-wx,o-rwx {} +."
-    compliance:
-      - cis: ["6.2.4.1"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 6.2.4.1 Ensure audit log files mode is configured. (Automated) - Not implemented
+  # - id: 18775
+  #   title: "Ensure audit log files mode is configured."
+  #   description: "Audit log files contain information about the system and system activity."
+  #   rationale: "Access to audit records can reveal system and configuration data to attackers, potentially compromising its confidentiality."
+  #   remediation: "Run the following command to remove more permissive mode than 0640 from audit log files: # [ -f /etc/audit/auditd.conf ] && find \"$(dirname $(awk -F \"=\" '/^\\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))\" -type f -perm /0137 -exec chmod u-x,g-wx,o-rwx {} +."
+  #   compliance:
+  #     - cis: ["6.2.4.1"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0007"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1083"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: none
+  #   rules: []
 
-  # 6.2.4.2 Ensure audit log files owner is configured. (Automated)
-  - id: 18776
-    title: "Ensure audit log files owner is configured."
-    description: "Audit log files contain information about the system and system activity."
-    rationale: "Access to audit records can reveal system and configuration data to attackers, potentially compromising its confidentiality."
-    remediation: "Run the following command to configure the audit log files to be owned by the root user: # [ -f /etc/audit/auditd.conf ] && find \"$(dirname $(awk -F \"=\" '/^\\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))\" -type f ! -user root -exec chown root {} +."
-    compliance:
-      - cis: ["6.2.4.2"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 6.2.4.2 Ensure audit log files owner is configured. (Automated) - Not implemented
+  # - id: 18776
+  #   title: "Ensure audit log files owner is configured."
+  #   description: "Audit log files contain information about the system and system activity."
+  #   rationale: "Access to audit records can reveal system and configuration data to attackers, potentially compromising its confidentiality."
+  #   remediation: "Run the following command to configure the audit log files to be owned by the root user: # [ -f /etc/audit/auditd.conf ] && find \"$(dirname $(awk -F \"=\" '/^\\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs))\" -type f ! -user root -exec chown root {} +."
+  #   compliance:
+  #     - cis: ["6.2.4.2"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0007"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1083"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: none
+  #   rules: []
 
   # 6.2.4.3 Ensure audit log files group owner is configured. (Automated)
   - id: 18777
@@ -7522,38 +7676,39 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - f:/etc/audit/auditd.conf -> r:^log_group\s*\t*= && r:adm|root
 
-  # 6.2.4.4 Ensure the audit log file directory mode is configured. (Automated)
-  - id: 18778
-    title: "Ensure the audit log file directory mode is configured."
-    description: "The audit log directory contains audit log files."
-    rationale: "Audit information includes all information including: audit records, audit settings and audit reports. This information is needed to successfully audit system activity. This information must be protected from unauthorized modification or deletion. If this information were to be compromised, forensic analysis and discovery of the true source of potentially malicious system activity is impossible to achieve."
-    remediation: "Run the following command to configure the audit log directory to have a mode of \"0750\" or less permissive: # chmod g-w,o-rwx \"$(dirname \"$(awk -F= '/^\\s*log_file\\s*/{print $2}' /etc/audit/auditd.conf | xargs)\")\"."
-    compliance:
-      - cis: ["6.2.4.4"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+  # # 6.2.4.4 Ensure the audit log file directory mode is configured. (Automated) - Not implemented
+  # - id: 18778
+  #   title: "Ensure the audit log file directory mode is configured."
+  #   description: "The audit log directory contains audit log files."
+  #   rationale: "Audit information includes all information including: audit records, audit settings and audit reports. This information is needed to successfully audit system activity. This information must be protected from unauthorized modification or deletion. If this information were to be compromised, forensic analysis and discovery of the true source of potentially malicious system activity is impossible to achieve."
+  #   remediation: "Run the following command to configure the audit log directory to have a mode of \"0750\" or less permissive: # chmod g-w,o-rwx \"$(dirname \"$(awk -F= '/^\\s*log_file\\s*/{print $2}' /etc/audit/auditd.conf | xargs)\")\"."
+  #   compliance:
+  #     - cis: ["6.2.4.4"]
+  #     - cis_csc_v8: ["3.3"]
+  #     - cis_csc_v7: ["14.6"]
+  #     - cmmc_v2.0:
+  #         [
+  #           "AC.L1-3.1.1",
+  #           "AC.L1-3.1.2",
+  #           "AC.L2-3.1.3",
+  #           "AC.L2-3.1.5",
+  #           "MP.L2-3.8.2",
+  #         ]
+  #     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+  #     - iso_27001-2013: ["A.9.1.1"]
+  #     - mitre_mitigations: ["M1022"]
+  #     - mitre_tactics: ["TA0007"]
+  #     - mitre_techniques: ["T1070", "T1070.002", "T1083"]
+  #     - nist_sp_800-53: ["AC-5", "AC-6"]
+  #     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+  #     - pci_dss_v4.0: ["1.3.1", "7.1"]
+  #     - soc_2: ["CC5.2", "CC6.1"]
+  #   condition: none
+  #   rules: []
 
   # 6.2.4.5 Ensure audit configuration files mode is configured. (Automated)
   - id: 18779
@@ -7582,8 +7737,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%a'' {} + | grep -cvE ''^(000|040|200|400|600|240|440|640)''" -> n:^(\d+) compare == 0'
 
   # 6.2.4.6 Ensure audit configuration files owner is configured. (Automated)
   - id: 18780
@@ -7612,8 +7768,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%U'' {} + | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
 
   # 6.2.4.7 Ensure audit configuration files group owner is configured. (Automated)
   - id: 18781
@@ -7642,8 +7799,9 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%G'' {} + | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
 
   # 6.2.4.8 Ensure audit tools mode is configured. (Automated)
   - id: 18782
@@ -7672,8 +7830,26 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:stat -c "%a" /sbin/auditctl -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/auditctl -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/auditctl -> n:^\d\d(\d) compare <= 5
+      - c:stat -c "%a" /sbin/aureport -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/aureport -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/aureport -> n:^\d\d(\d) compare <= 5
+      - c:stat -c "%a" /sbin/ausearch -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/ausearch -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/ausearch -> n:^\d\d(\d) compare <= 5
+      - c:stat -c "%a" /sbin/autrace -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/autrace -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/autrace -> n:^\d\d(\d) compare <= 5
+      - c:stat -c "%a" /sbin/auditd -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/auditd -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/auditd -> n:^\d\d(\d) compare <= 5
+      - c:stat -c "%a" /sbin/augenrules -> n:^(\d)\d\d compare <= 7
+      - c:stat -c "%a" /sbin/augenrules -> n:^\d(\d)\d compare <= 5
+      - c:stat -c "%a" /sbin/augenrules -> n:^\d\d(\d) compare <= 5
 
   # 6.2.4.9 Ensure audit tools owner is configured. (Automated)
   - id: 18783
@@ -7702,8 +7878,26 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:stat -c "%U" /sbin/auditctl -> r:^root
+      - c:stat -c "%U" /sbin/auditctl -> r:^root
+      - c:stat -c "%U" /sbin/auditctl -> r:^root
+      - c:stat -c "%U" /sbin/aureport -> r:^root
+      - c:stat -c "%U" /sbin/aureport -> r:^root
+      - c:stat -c "%U" /sbin/aureport -> r:^root
+      - c:stat -c "%U" /sbin/ausearch -> r:^root
+      - c:stat -c "%U" /sbin/ausearch -> r:^root
+      - c:stat -c "%U" /sbin/ausearch -> r:^root
+      - c:stat -c "%U" /sbin/autrace -> r:^root
+      - c:stat -c "%U" /sbin/autrace -> r:^root
+      - c:stat -c "%U" /sbin/autrace -> r:^root
+      - c:stat -c "%U" /sbin/auditd -> r:^root
+      - c:stat -c "%U" /sbin/auditd -> r:^root
+      - c:stat -c "%U" /sbin/auditd -> r:^root
+      - c:stat -c "%U" /sbin/augenrules -> r:^root
+      - c:stat -c "%U" /sbin/augenrules -> r:^root
+      - c:stat -c "%U" /sbin/augenrules -> r:^root
 
   # 6.2.4.10 Ensure audit tools group owner is configured. (Automated)
   - id: 18784
@@ -7732,8 +7926,26 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:stat -c "%G" /sbin/auditctl -> r:^root
+      - c:stat -c "%G" /sbin/auditctl -> r:^root
+      - c:stat -c "%G" /sbin/auditctl -> r:^root
+      - c:stat -c "%G" /sbin/aureport -> r:^root
+      - c:stat -c "%G" /sbin/aureport -> r:^root
+      - c:stat -c "%G" /sbin/aureport -> r:^root
+      - c:stat -c "%G" /sbin/ausearch -> r:^root
+      - c:stat -c "%G" /sbin/ausearch -> r:^root
+      - c:stat -c "%G" /sbin/ausearch -> r:^root
+      - c:stat -c "%G" /sbin/autrace -> r:^root
+      - c:stat -c "%G" /sbin/autrace -> r:^root
+      - c:stat -c "%G" /sbin/autrace -> r:^root
+      - c:stat -c "%G" /sbin/auditd -> r:^root
+      - c:stat -c "%G" /sbin/auditd -> r:^root
+      - c:stat -c "%G" /sbin/auditd -> r:^root
+      - c:stat -c "%G" /sbin/augenrules -> r:^root
+      - c:stat -c "%G" /sbin/augenrules -> r:^root
+      - c:stat -c "%G" /sbin/augenrules -> r:^root
 
   # 6.3.1 Ensure AIDE is installed. (Automated)
   - id: 18785
@@ -7755,8 +7967,9 @@ checks:
       - pci_dss_v3.2.1: ["10.2.1", "11.5"]
       - pci_dss_v4.0: ["10.2.1", "10.2.1.1"]
       - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - "c:dpkg-query -s aide -> r:^Status: install ok installed"
 
   # 6.3.2 Ensure filesystem integrity is regularly checked. (Automated)
   - id: 18786
@@ -7789,8 +8002,12 @@ checks:
       - pci_dss_v3.2.1: ["10.1", "10.2.2", "10.2.4", "10.2.5", "10.3"]
       - pci_dss_v4.0: ["10.2", "10.2.1", "10.2.1.2", "10.2.1.5", "9.4.5"]
       - soc_2: ["CC5.2", "CC7.2"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - c:systemctl show dailyaidecheck.service -> r:^LoadState=loaded
+      - c:systemctl show dailyaidecheck.service -> r:^ActiveState=active
+      - c:systemctl show dailyaidecheck.timer -> r:^LoadState=loaded
+      - c:systemctl show dailyaidecheck.timer -> r:^ActiveState=active
 
   # 6.3.3 Ensure cryptographic mechanisms are used to protect the integrity of audit tools. (Automated)
   - id: 18787
@@ -7802,629 +8019,643 @@ checks:
       - cis: ["6.3.3"]
       - mitre_tactics: ["TA0007"]
       - mitre_techniques: ["T1070", "T1070.002", "T1083"]
-    condition: none
-    rules: []
+    condition: all
+    rules:
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/auditctl\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/auditd\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/ausearch\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/aureport\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/autrace\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+      - 'f:/etc/aide/aide.conf -> r:^/sbin|/usr/sbin && r:/augenrules\s*\t*p\pi\pn\pu\pg\ps\pb\pacl\pxattrs\psha512'
+# All checks complete.
+#   ∞ Total Count          Checks: 266
+#   ✔ Total Passed         Checks: 199
+#   ✔ Pass                  Score: 75.38%
+#   ✖ Total Failed         Checks: 65
+#   ✖ Fail                   Rate: 24.62%
+#   ↷ Total Not Applicable Checks: 2
+#   ↷ Total Skipped        Checks: 0
 
-  # 7.1.1 Ensure permissions on /etc/passwd are configured. (Automated)
-  - id: 18788
-    title: "Ensure permissions on /etc/passwd are configured."
-    description: "The /etc/passwd file contains user account information that is used by many system utilities and therefore must be readable for these utilities to operate."
-    rationale: "It is critical to ensure that the /etc/passwd file is protected from unauthorized write access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/passwd: # chmod u-x,go-wx /etc/passwd # chown root:root /etc/passwd."
-    compliance:
-      - cis: ["7.1.1"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.1 Ensure permissions on /etc/passwd are configured. (Automated)
+# - id: 18788
+#   title: "Ensure permissions on /etc/passwd are configured."
+#   description: "The /etc/passwd file contains user account information that is used by many system utilities and therefore must be readable for these utilities to operate."
+#   rationale: "It is critical to ensure that the /etc/passwd file is protected from unauthorized write access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/passwd: # chmod u-x,go-wx /etc/passwd # chown root:root /etc/passwd."
+#   compliance:
+#     - cis: ["7.1.1"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.2 Ensure permissions on /etc/passwd- are configured. (Automated)
-  - id: 18789
-    title: "Ensure permissions on /etc/passwd- are configured."
-    description: "The /etc/passwd- file contains backup user account information."
-    rationale: "It is critical to ensure that the /etc/passwd- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/passwd-: # chmod u-x,go-wx /etc/passwd- # chown root:root /etc/passwd-."
-    compliance:
-      - cis: ["7.1.2"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.2 Ensure permissions on /etc/passwd- are configured. (Automated)
+# - id: 18789
+#   title: "Ensure permissions on /etc/passwd- are configured."
+#   description: "The /etc/passwd- file contains backup user account information."
+#   rationale: "It is critical to ensure that the /etc/passwd- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/passwd-: # chmod u-x,go-wx /etc/passwd- # chown root:root /etc/passwd-."
+#   compliance:
+#     - cis: ["7.1.2"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.3 Ensure permissions on /etc/group are configured. (Automated)
-  - id: 18790
-    title: "Ensure permissions on /etc/group are configured."
-    description: "The /etc/group file contains a list of all the valid groups defined in the system. The command below allows read/write access for root and read access for everyone else."
-    rationale: "The /etc/group file needs to be protected from unauthorized changes by non-privileged users, but needs to be readable as this information is used with many non-privileged programs."
-    remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/group: # chmod u-x,go-wx /etc/group # chown root:root /etc/group."
-    compliance:
-      - cis: ["7.1.3"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.3 Ensure permissions on /etc/group are configured. (Automated)
+# - id: 18790
+#   title: "Ensure permissions on /etc/group are configured."
+#   description: "The /etc/group file contains a list of all the valid groups defined in the system. The command below allows read/write access for root and read access for everyone else."
+#   rationale: "The /etc/group file needs to be protected from unauthorized changes by non-privileged users, but needs to be readable as this information is used with many non-privileged programs."
+#   remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/group: # chmod u-x,go-wx /etc/group # chown root:root /etc/group."
+#   compliance:
+#     - cis: ["7.1.3"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.4 Ensure permissions on /etc/group- are configured. (Automated)
-  - id: 18791
-    title: "Ensure permissions on /etc/group- are configured."
-    description: "The /etc/group- file contains a backup list of all the valid groups defined in the system."
-    rationale: "It is critical to ensure that the /etc/group- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/group-: # chmod u-x,go-wx /etc/group- # chown root:root /etc/group-."
-    compliance:
-      - cis: ["7.1.4"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.4 Ensure permissions on /etc/group- are configured. (Automated)
+# - id: 18791
+#   title: "Ensure permissions on /etc/group- are configured."
+#   description: "The /etc/group- file contains a backup list of all the valid groups defined in the system."
+#   rationale: "It is critical to ensure that the /etc/group- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/group-: # chmod u-x,go-wx /etc/group- # chown root:root /etc/group-."
+#   compliance:
+#     - cis: ["7.1.4"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.5 Ensure permissions on /etc/shadow are configured. (Automated)
-  - id: 18792
-    title: "Ensure permissions on /etc/shadow are configured."
-    description: "The /etc/shadow file is used to store the information about user accounts that is critical to the security of those accounts, such as the hashed password and other security information."
-    rationale: "If attackers can gain read access to the /etc/shadow file, they can easily run a password cracking program against the hashed password to break it. Other security information that is stored in the /etc/shadow file (such as expiration) could also be useful to subvert the user accounts."
-    remediation: "Run one of the following commands to set ownership of /etc/shadow to root and group to either root or shadow: # chown root:shadow /etc/shadow -OR- # chown root:root /etc/shadow Run the following command to remove excess permissions form /etc/shadow: # chmod u-x,g-wx,o-rwx /etc/shadow."
-    compliance:
-      - cis: ["7.1.5"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.5 Ensure permissions on /etc/shadow are configured. (Automated)
+# - id: 18792
+#   title: "Ensure permissions on /etc/shadow are configured."
+#   description: "The /etc/shadow file is used to store the information about user accounts that is critical to the security of those accounts, such as the hashed password and other security information."
+#   rationale: "If attackers can gain read access to the /etc/shadow file, they can easily run a password cracking program against the hashed password to break it. Other security information that is stored in the /etc/shadow file (such as expiration) could also be useful to subvert the user accounts."
+#   remediation: "Run one of the following commands to set ownership of /etc/shadow to root and group to either root or shadow: # chown root:shadow /etc/shadow -OR- # chown root:root /etc/shadow Run the following command to remove excess permissions form /etc/shadow: # chmod u-x,g-wx,o-rwx /etc/shadow."
+#   compliance:
+#     - cis: ["7.1.5"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.6 Ensure permissions on /etc/shadow- are configured. (Automated)
-  - id: 18793
-    title: "Ensure permissions on /etc/shadow- are configured."
-    description: "The /etc/shadow- file is used to store backup information about user accounts that is critical to the security of those accounts, such as the hashed password and other security information."
-    rationale: "It is critical to ensure that the /etc/shadow- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run one of the following commands to set ownership of /etc/shadow- to root and group to either root or shadow: # chown root:shadow /etc/shadow- -OR- # chown root:root /etc/shadow- Run the following command to remove excess permissions form /etc/shadow-: # chmod u-x,g-wx,o-rwx /etc/shadow-."
-    compliance:
-      - cis: ["7.1.6"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.6 Ensure permissions on /etc/shadow- are configured. (Automated)
+# - id: 18793
+#   title: "Ensure permissions on /etc/shadow- are configured."
+#   description: "The /etc/shadow- file is used to store backup information about user accounts that is critical to the security of those accounts, such as the hashed password and other security information."
+#   rationale: "It is critical to ensure that the /etc/shadow- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run one of the following commands to set ownership of /etc/shadow- to root and group to either root or shadow: # chown root:shadow /etc/shadow- -OR- # chown root:root /etc/shadow- Run the following command to remove excess permissions form /etc/shadow-: # chmod u-x,g-wx,o-rwx /etc/shadow-."
+#   compliance:
+#     - cis: ["7.1.6"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.7 Ensure permissions on /etc/gshadow are configured. (Automated)
-  - id: 18794
-    title: "Ensure permissions on /etc/gshadow are configured."
-    description: "The /etc/gshadow file is used to store the information about groups that is critical to the security of those accounts, such as the hashed password and other security information."
-    rationale: "If attackers can gain read access to the /etc/gshadow file, they can easily run a password cracking program against the hashed password to break it. Other security information that is stored in the /etc/gshadow file (such as group administrators) could also be useful to subvert the group."
-    remediation: "Run one of the following commands to set ownership of /etc/gshadow to root and group to either root or shadow: # chown root:shadow /etc/gshadow -OR- # chown root:root /etc/gshadow Run the following command to remove excess permissions form /etc/gshadow: # chmod u-x,g-wx,o-rwx /etc/gshadow."
-    compliance:
-      - cis: ["7.1.7"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.7 Ensure permissions on /etc/gshadow are configured. (Automated)
+# - id: 18794
+#   title: "Ensure permissions on /etc/gshadow are configured."
+#   description: "The /etc/gshadow file is used to store the information about groups that is critical to the security of those accounts, such as the hashed password and other security information."
+#   rationale: "If attackers can gain read access to the /etc/gshadow file, they can easily run a password cracking program against the hashed password to break it. Other security information that is stored in the /etc/gshadow file (such as group administrators) could also be useful to subvert the group."
+#   remediation: "Run one of the following commands to set ownership of /etc/gshadow to root and group to either root or shadow: # chown root:shadow /etc/gshadow -OR- # chown root:root /etc/gshadow Run the following command to remove excess permissions form /etc/gshadow: # chmod u-x,g-wx,o-rwx /etc/gshadow."
+#   compliance:
+#     - cis: ["7.1.7"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.8 Ensure permissions on /etc/gshadow- are configured. (Automated)
-  - id: 18795
-    title: "Ensure permissions on /etc/gshadow- are configured."
-    description: "The /etc/gshadow- file is used to store backup information about groups that is critical to the security of those accounts, such as the hashed password and other security information."
-    rationale: "It is critical to ensure that the /etc/gshadow- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run one of the following commands to set ownership of /etc/gshadow- to root and group to either root or shadow: # chown root:shadow /etc/gshadow- -OR- # chown root:root /etc/gshadow- Run the following command to remove excess permissions form /etc/gshadow-: # chmod u-x,g-wx,o-rwx /etc/gshadow-."
-    compliance:
-      - cis: ["7.1.8"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.8 Ensure permissions on /etc/gshadow- are configured. (Automated)
+# - id: 18795
+#   title: "Ensure permissions on /etc/gshadow- are configured."
+#   description: "The /etc/gshadow- file is used to store backup information about groups that is critical to the security of those accounts, such as the hashed password and other security information."
+#   rationale: "It is critical to ensure that the /etc/gshadow- file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run one of the following commands to set ownership of /etc/gshadow- to root and group to either root or shadow: # chown root:shadow /etc/gshadow- -OR- # chown root:root /etc/gshadow- Run the following command to remove excess permissions form /etc/gshadow-: # chmod u-x,g-wx,o-rwx /etc/gshadow-."
+#   compliance:
+#     - cis: ["7.1.8"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.9 Ensure permissions on /etc/shells are configured. (Automated)
-  - id: 18796
-    title: "Ensure permissions on /etc/shells are configured."
-    description: "/etc/shells is a text file which contains the full pathnames of valid login shells. This file is consulted by chsh and available to be queried by other programs."
-    rationale: "It is critical to ensure that the /etc/shells file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/shells: # chmod u-x,go-wx /etc/shells # chown root:root /etc/shells."
-    compliance:
-      - cis: ["7.1.9"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.9 Ensure permissions on /etc/shells are configured. (Automated)
+# - id: 18796
+#   title: "Ensure permissions on /etc/shells are configured."
+#   description: "/etc/shells is a text file which contains the full pathnames of valid login shells. This file is consulted by chsh and available to be queried by other programs."
+#   rationale: "It is critical to ensure that the /etc/shells file is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: "Run the following commands to remove excess permissions, set owner, and set group on /etc/shells: # chmod u-x,go-wx /etc/shells # chown root:root /etc/shells."
+#   compliance:
+#     - cis: ["7.1.9"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.10 Ensure permissions on /etc/security/opasswd are configured. (Automated)
-  - id: 18797
-    title: "Ensure permissions on /etc/security/opasswd are configured."
-    description: "/etc/security/opasswd and it's backup /etc/security/opasswd.old hold user's previous passwords if pam_unix or pam_pwhistory is in use on the system."
-    rationale: "It is critical to ensure that /etc/security/opasswd is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
-    remediation: 'Run the following commands to remove excess permissions, set owner, and set group on /etc/security/opasswd and /etc/security/opasswd.old is they exist: # [ -e "/etc/security/opasswd" ] && chmod u-x,go-rwx /etc/security/opasswd # [ -e "/etc/security/opasswd" ] && chown root:root /etc/security/opasswd # [ -e "/etc/security/opasswd.old" ] && chmod u-x,go-rwx /etc/security/opasswd.old # [ -e "/etc/security/opasswd.old" ] && chown root:root /etc/security/opasswd.old.'
-    compliance:
-      - cis: ["7.1.10"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.10 Ensure permissions on /etc/security/opasswd are configured. (Automated)
+# - id: 18797
+#   title: "Ensure permissions on /etc/security/opasswd are configured."
+#   description: "/etc/security/opasswd and it's backup /etc/security/opasswd.old hold user's previous passwords if pam_unix or pam_pwhistory is in use on the system."
+#   rationale: "It is critical to ensure that /etc/security/opasswd is protected from unauthorized access. Although it is protected by default, the file permissions could be changed either inadvertently or through malicious actions."
+#   remediation: 'Run the following commands to remove excess permissions, set owner, and set group on /etc/security/opasswd and /etc/security/opasswd.old is they exist: # [ -e "/etc/security/opasswd" ] && chmod u-x,go-rwx /etc/security/opasswd # [ -e "/etc/security/opasswd" ] && chown root:root /etc/security/opasswd # [ -e "/etc/security/opasswd.old" ] && chmod u-x,go-rwx /etc/security/opasswd.old # [ -e "/etc/security/opasswd.old" ] && chown root:root /etc/security/opasswd.old.'
+#   compliance:
+#     - cis: ["7.1.10"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008", "T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.11 Ensure world writable files and directories are secured. (Automated)
-  - id: 18798
-    title: "Ensure world writable files and directories are secured."
-    description: "World writable files are the least secure. Data in world-writable files can be modified and compromised by any user on the system. World writable files may also indicate an incorrectly written script or program that could potentially be the cause of a larger compromise to the system's integrity. See the chmod(2) man page for more information. Setting the sticky bit on world writable directories prevents users from deleting or renaming files in that directory that are not owned by them."
-    rationale: "Data in world-writable files can be modified and compromised by any user on the system. World writable files may also indicate an incorrectly written script or program that could potentially be the cause of a larger compromise to the system's integrity. This feature prevents the ability to delete or rename files in world writable directories (such as /tmp) that are owned by another user."
-    remediation: "- World Writable Files: o It is recommended that write access is removed from other with the command ( chmod o-w <filename> ), but always consult relevant vendor documentation to avoid breaking any application dependencies on a given file. - World Writable Directories: o Set the sticky bit on all world writable directories with the command ( chmod a+t <directory_name> ) Run the following script to: - Remove other write permission from any world writable files - Add the sticky bit to all world writable directories #!/usr/bin/env bash { l_smask='01000' a_file=(); a_dir=() # Initialize arrays a_path=(! -path \"/run/user/*\" -a ! -path \"/proc/*\" -a ! -path \"*/containerd/*\" -a ! -path \"*/kubelet/pods/*\" -a ! -path \"*/kubelet/plugins/*\" -a ! -path \"/sys/*\" -a ! -path \"/snap/*\") while IFS= read -r l_mount; do while IFS= read -r -d $'\\0' l_file; do if [ -e \"$l_file\" ]; then l_mode=\"$(stat -Lc '%#a' \"$l_file\")\" if [ -f \"$l_file\" ]; then # Remove excess permissions from WW files echo -e \" - File: \\\"$l_file\\\" is mode: \\\"$l_mode\\\"\\n - removing write permission on \\\"$l_file\\\" from \\\"other\\\"\" chmod o-w \"$l_file\" fi if [ -d \"$l_file\" ]; then # Add sticky bit if [ ! $(( $l_mode & $l_smask )) -gt 0 ]; then echo -e \" - Directory: \\\"$l_file\\\" is mode: \\\"$l_mode\\\" and doesn't have the sticky bit set\\n - Adding the sticky bit\" chmod a+t \"$l_file\" fi fi fi done < <(find \"$l_mount\" -xdev \\( \"${a_path[@]}\" \\) \\( -type f -o -type d \\) -perm -0002 -print0 2> /dev/null) done < <(findmnt -Dkerno fstype,target | awk '($1 !~ /^\\s*(nfs|proc|smb|vfat|iso9660|efivarfs|selinuxfs)/ && $2 !~ /^(\\/run\\/user\\/|\\/tmp|\\/var\\/tmp)/){print $2}') }."
-    compliance:
-      - cis: ["7.1.11"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022", "M1028"]
-      - mitre_tactics: ["TA0004", "TA0005"]
-      - mitre_techniques: ["T1222", "T1222.002", "T1548"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.11 Ensure world writable files and directories are secured. (Automated)
+# - id: 18798
+#   title: "Ensure world writable files and directories are secured."
+#   description: "World writable files are the least secure. Data in world-writable files can be modified and compromised by any user on the system. World writable files may also indicate an incorrectly written script or program that could potentially be the cause of a larger compromise to the system's integrity. See the chmod(2) man page for more information. Setting the sticky bit on world writable directories prevents users from deleting or renaming files in that directory that are not owned by them."
+#   rationale: "Data in world-writable files can be modified and compromised by any user on the system. World writable files may also indicate an incorrectly written script or program that could potentially be the cause of a larger compromise to the system's integrity. This feature prevents the ability to delete or rename files in world writable directories (such as /tmp) that are owned by another user."
+#   remediation: "- World Writable Files: o It is recommended that write access is removed from other with the command ( chmod o-w <filename> ), but always consult relevant vendor documentation to avoid breaking any application dependencies on a given file. - World Writable Directories: o Set the sticky bit on all world writable directories with the command ( chmod a+t <directory_name> ) Run the following script to: - Remove other write permission from any world writable files - Add the sticky bit to all world writable directories #!/usr/bin/env bash { l_smask='01000' a_file=(); a_dir=() # Initialize arrays a_path=(! -path \"/run/user/*\" -a ! -path \"/proc/*\" -a ! -path \"*/containerd/*\" -a ! -path \"*/kubelet/pods/*\" -a ! -path \"*/kubelet/plugins/*\" -a ! -path \"/sys/*\" -a ! -path \"/snap/*\") while IFS= read -r l_mount; do while IFS= read -r -d $'\\0' l_file; do if [ -e \"$l_file\" ]; then l_mode=\"$(stat -Lc '%#a' \"$l_file\")\" if [ -f \"$l_file\" ]; then # Remove excess permissions from WW files echo -e \" - File: \\\"$l_file\\\" is mode: \\\"$l_mode\\\"\\n - removing write permission on \\\"$l_file\\\" from \\\"other\\\"\" chmod o-w \"$l_file\" fi if [ -d \"$l_file\" ]; then # Add sticky bit if [ ! $(( $l_mode & $l_smask )) -gt 0 ]; then echo -e \" - Directory: \\\"$l_file\\\" is mode: \\\"$l_mode\\\" and doesn't have the sticky bit set\\n - Adding the sticky bit\" chmod a+t \"$l_file\" fi fi fi done < <(find \"$l_mount\" -xdev \\( \"${a_path[@]}\" \\) \\( -type f -o -type d \\) -perm -0002 -print0 2> /dev/null) done < <(findmnt -Dkerno fstype,target | awk '($1 !~ /^\\s*(nfs|proc|smb|vfat|iso9660|efivarfs|selinuxfs)/ && $2 !~ /^(\\/run\\/user\\/|\\/tmp|\\/var\\/tmp)/){print $2}') }."
+#   compliance:
+#     - cis: ["7.1.11"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022", "M1028"]
+#     - mitre_tactics: ["TA0004", "TA0005"]
+#     - mitre_techniques: ["T1222", "T1222.002", "T1548"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.12 Ensure no files or directories without an owner and a group exist. (Automated)
-  - id: 18799
-    title: "Ensure no files or directories without an owner and a group exist."
-    description: "Administrators may delete users or groups from the system and neglect to remove all files and/or directories owned by those users or groups."
-    rationale: 'A new user or group who is assigned a deleted user''s user ID or group ID may then end up "owning" a deleted user or group''s files, and thus have more access on the system than was intended.'
-    remediation: "Remove or set ownership and group ownership of these files and/or directories to an active user on the system as appropriate."
-    compliance:
-      - cis: ["7.1.12"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0007"]
-      - mitre_techniques: ["T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.12 Ensure no files or directories without an owner and a group exist. (Automated)
+# - id: 18799
+#   title: "Ensure no files or directories without an owner and a group exist."
+#   description: "Administrators may delete users or groups from the system and neglect to remove all files and/or directories owned by those users or groups."
+#   rationale: 'A new user or group who is assigned a deleted user''s user ID or group ID may then end up "owning" a deleted user or group''s files, and thus have more access on the system than was intended.'
+#   remediation: "Remove or set ownership and group ownership of these files and/or directories to an active user on the system as appropriate."
+#   compliance:
+#     - cis: ["7.1.12"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0007"]
+#     - mitre_techniques: ["T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.1.13 Ensure SUID and SGID files are reviewed. (Manual)
-  - id: 18800
-    title: "Ensure SUID and SGID files are reviewed."
-    description: "The owner of a file can set the file's permissions to run with the owner's or group's permissions, even if the user running the program is not the owner or a member of the group. The most common reason for a SUID or SGID program is to enable users to perform functions (such as changing their password) that require root privileges."
-    rationale: "There are valid reasons for SUID and SGID programs, but it is important to identify and review such programs to ensure they are legitimate. Review the files returned by the action in the audit section and check to see if system binaries have a different checksum than what from the package. This is an indication that the binary may have been replaced."
-    remediation: "Ensure that no rogue SUID or SGID programs have been introduced into the system. Review the files returned by the action in the Audit section and confirm the integrity of these binaries."
-    compliance:
-      - cis: ["7.1.13"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1028"]
-      - mitre_tactics: ["TA0004"]
-      - mitre_techniques: ["T1548", "T1548.001"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.1.13 Ensure SUID and SGID files are reviewed. (Manual)
+# - id: 18800
+#   title: "Ensure SUID and SGID files are reviewed."
+#   description: "The owner of a file can set the file's permissions to run with the owner's or group's permissions, even if the user running the program is not the owner or a member of the group. The most common reason for a SUID or SGID program is to enable users to perform functions (such as changing their password) that require root privileges."
+#   rationale: "There are valid reasons for SUID and SGID programs, but it is important to identify and review such programs to ensure they are legitimate. Review the files returned by the action in the audit section and check to see if system binaries have a different checksum than what from the package. This is an indication that the binary may have been replaced."
+#   remediation: "Ensure that no rogue SUID or SGID programs have been introduced into the system. Review the files returned by the action in the Audit section and confirm the integrity of these binaries."
+#   compliance:
+#     - cis: ["7.1.13"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1028"]
+#     - mitre_tactics: ["TA0004"]
+#     - mitre_techniques: ["T1548", "T1548.001"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.1 Ensure accounts in /etc/passwd use shadowed passwords. (Automated)
-  - id: 18801
-    title: "Ensure accounts in /etc/passwd use shadowed passwords."
-    description: "Local accounts can uses shadowed passwords. With shadowed passwords, The passwords are saved in shadow password file, /etc/shadow, encrypted by a salted one-way hash. Accounts with a shadowed password have an x in the second field in /etc/passwd."
-    rationale: "The /etc/passwd file also contains information like user ID's and group ID's that are used by many system programs. Therefore, the /etc/passwd file must remain world readable. In spite of encoding the password with a randomly-generated one-way hash function, an attacker could still break the system if they got access to the /etc/passwd file. This can be mitigated by using shadowed passwords, thus moving the passwords in the /etc/passwd file to /etc/shadow. The /etc/shadow file is set so only root will be able to read and write. This helps mitigate the risk of an attacker gaining access to the encoded passwords with which to perform a dictionary attack. Note: - All accounts must have passwords or be locked to prevent the account from being used by an unauthorized user. - A user account with an empty second field in /etc/passwd allows the account to be logged into by providing only the username."
-    remediation: "Run the following command to set accounts to use shadowed passwords and migrate passwords in /etc/passwd to /etc/shadow: # pwconv Investigate to determine if the account is logged in and what it is being used for, to determine if it needs to be forced off."
-    compliance:
-      - cis: ["7.2.1"]
-      - cis_csc_v8: ["3.11"]
-      - cis_csc_v7: ["16.4"]
-      - cmmc_v2.0:
-          [
-            "AC.L2-3.1.19",
-            "IA.L2-3.5.10",
-            "MP.L2-3.8.1",
-            "SC.L2-3.13.11",
-            "SC.L2-3.13.16",
-          ]
-      - hipaa: ["164.312(a)(2)(iv)", "164.312(e)(2)(ii)"]
-      - iso_27001-2013: ["A.10.1.1"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0003"]
-      - mitre_techniques: ["T1003", "T1003.008"]
-      - nist_sp_800-53: ["SC-28", "SC-28(1)"]
-      - pci_dss_v3.2.1: ["3.4", "3.4.1", "8.2.1"]
-      - pci_dss_v4.0:
-          ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
-      - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.1 Ensure accounts in /etc/passwd use shadowed passwords. (Automated)
+# - id: 18801
+#   title: "Ensure accounts in /etc/passwd use shadowed passwords."
+#   description: "Local accounts can uses shadowed passwords. With shadowed passwords, The passwords are saved in shadow password file, /etc/shadow, encrypted by a salted one-way hash. Accounts with a shadowed password have an x in the second field in /etc/passwd."
+#   rationale: "The /etc/passwd file also contains information like user ID's and group ID's that are used by many system programs. Therefore, the /etc/passwd file must remain world readable. In spite of encoding the password with a randomly-generated one-way hash function, an attacker could still break the system if they got access to the /etc/passwd file. This can be mitigated by using shadowed passwords, thus moving the passwords in the /etc/passwd file to /etc/shadow. The /etc/shadow file is set so only root will be able to read and write. This helps mitigate the risk of an attacker gaining access to the encoded passwords with which to perform a dictionary attack. Note: - All accounts must have passwords or be locked to prevent the account from being used by an unauthorized user. - A user account with an empty second field in /etc/passwd allows the account to be logged into by providing only the username."
+#   remediation: "Run the following command to set accounts to use shadowed passwords and migrate passwords in /etc/passwd to /etc/shadow: # pwconv Investigate to determine if the account is logged in and what it is being used for, to determine if it needs to be forced off."
+#   compliance:
+#     - cis: ["7.2.1"]
+#     - cis_csc_v8: ["3.11"]
+#     - cis_csc_v7: ["16.4"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L2-3.1.19",
+#           "IA.L2-3.5.10",
+#           "MP.L2-3.8.1",
+#           "SC.L2-3.13.11",
+#           "SC.L2-3.13.16",
+#         ]
+#     - hipaa: ["164.312(a)(2)(iv)", "164.312(e)(2)(ii)"]
+#     - iso_27001-2013: ["A.10.1.1"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0003"]
+#     - mitre_techniques: ["T1003", "T1003.008"]
+#     - nist_sp_800-53: ["SC-28", "SC-28(1)"]
+#     - pci_dss_v3.2.1: ["3.4", "3.4.1", "8.2.1"]
+#     - pci_dss_v4.0:
+#         ["3.1.1", "3.3.2", "3.3.3", "3.5.1", "3.5.1.2", "3.5.1.3", "8.3.2"]
+#     - soc_2: ["CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.2 Ensure /etc/shadow password fields are not empty. (Automated)
-  - id: 18802
-    title: "Ensure /etc/shadow password fields are not empty."
-    description: "An account with an empty password field means that anybody may log in as that user without providing a password."
-    rationale: "All accounts must have passwords or be locked to prevent the account from being used by an unauthorized user."
-    remediation: "If any accounts in the /etc/shadow file do not have a password, run the following command to lock the account until it can be determined why it does not have a password: # passwd -l <username> Also, check to see if the account is logged in and investigate what it is being used for to determine if it needs to be forced off."
-    compliance:
-      - cis: ["7.2.2"]
-      - cis_csc_v8: ["5.2"]
-      - cis_csc_v7: ["4.4"]
-      - cmmc_v2.0: ["IA.L2-3.5.7"]
-      - iso_27001-2013: ["A.9.4.3"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0003"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-      - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
-      - soc_2: ["CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.2 Ensure /etc/shadow password fields are not empty. (Automated)
+# - id: 18802
+#   title: "Ensure /etc/shadow password fields are not empty."
+#   description: "An account with an empty password field means that anybody may log in as that user without providing a password."
+#   rationale: "All accounts must have passwords or be locked to prevent the account from being used by an unauthorized user."
+#   remediation: "If any accounts in the /etc/shadow file do not have a password, run the following command to lock the account until it can be determined why it does not have a password: # passwd -l <username> Also, check to see if the account is logged in and investigate what it is being used for to determine if it needs to be forced off."
+#   compliance:
+#     - cis: ["7.2.2"]
+#     - cis_csc_v8: ["5.2"]
+#     - cis_csc_v7: ["4.4"]
+#     - cmmc_v2.0: ["IA.L2-3.5.7"]
+#     - iso_27001-2013: ["A.9.4.3"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0003"]
+#     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+#     - pci_dss_v4.0: ["2.2.2", "8.3.5", "8.3.6", "8.6.3"]
+#     - soc_2: ["CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.3 Ensure all groups in /etc/passwd exist in /etc/group. (Automated)
-  - id: 18803
-    title: "Ensure all groups in /etc/passwd exist in /etc/group."
-    description: "Over time, system administration errors and changes can lead to groups being defined in /etc/passwd but not in /etc/group ."
-    rationale: "Groups defined in the /etc/passwd file but not in the /etc/group file pose a threat to system security since group permissions are not properly managed."
-    remediation: "Analyze the output of the Audit step above and perform the appropriate action to correct any discrepancies found."
-    compliance:
-      - cis: ["7.2.3"]
-      - cis_csc_v8: ["3.3", "14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "AT.L2-3.2.3",
-            "IR.L2-3.6.2",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa:
-          [
-            "164.308(a)(3)(i)",
-            "164.308(a)(3)(ii)(A)",
-            "164.308(a)(6)(ii)",
-            "164.312(a)(1)",
-          ]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0003"]
-      - mitre_techniques: ["T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.3 Ensure all groups in /etc/passwd exist in /etc/group. (Automated)
+# - id: 18803
+#   title: "Ensure all groups in /etc/passwd exist in /etc/group."
+#   description: "Over time, system administration errors and changes can lead to groups being defined in /etc/passwd but not in /etc/group ."
+#   rationale: "Groups defined in the /etc/passwd file but not in the /etc/group file pose a threat to system security since group permissions are not properly managed."
+#   remediation: "Analyze the output of the Audit step above and perform the appropriate action to correct any discrepancies found."
+#   compliance:
+#     - cis: ["7.2.3"]
+#     - cis_csc_v8: ["3.3", "14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "AT.L2-3.2.3",
+#           "IR.L2-3.6.2",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa:
+#         [
+#           "164.308(a)(3)(i)",
+#           "164.308(a)(3)(ii)(A)",
+#           "164.308(a)(6)(ii)",
+#           "164.312(a)(1)",
+#         ]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0003"]
+#     - mitre_techniques: ["T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.4 Ensure shadow group is empty. (Automated)
-  - id: 18804
-    title: "Ensure shadow group is empty."
-    description: "The shadow group allows system programs which require access the ability to read the /etc/shadow file. No users should be assigned to the shadow group."
-    rationale: "Any users assigned to the shadow group would be granted read access to the /etc/shadow file. If attackers can gain read access to the /etc/shadow file, they can easily run a password cracking program against the hashed passwords to break them. Other security information that is stored in the /etc/shadow file (such as expiration) could also be useful to subvert additional user accounts."
-    remediation: "Run the following command to remove all users from the shadow group # sed -ri 's/(^shadow:[^:]*:[^:]*:)([^:]+$)/\\1/' /etc/group Change the primary group of any users with shadow as their primary group. # usermod -g <primary group> <user>."
-    compliance:
-      - cis: ["7.2.4"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1003", "T1003.008"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.4 Ensure shadow group is empty. (Automated)
+# - id: 18804
+#   title: "Ensure shadow group is empty."
+#   description: "The shadow group allows system programs which require access the ability to read the /etc/shadow file. No users should be assigned to the shadow group."
+#   rationale: "Any users assigned to the shadow group would be granted read access to the /etc/shadow file. If attackers can gain read access to the /etc/shadow file, they can easily run a password cracking program against the hashed passwords to break them. Other security information that is stored in the /etc/shadow file (such as expiration) could also be useful to subvert additional user accounts."
+#   remediation: "Run the following command to remove all users from the shadow group # sed -ri 's/(^shadow:[^:]*:[^:]*:)([^:]+$)/\\1/' /etc/group Change the primary group of any users with shadow as their primary group. # usermod -g <primary group> <user>."
+#   compliance:
+#     - cis: ["7.2.4"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1003", "T1003.008"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.5 Ensure no duplicate UIDs exist. (Automated)
-  - id: 18805
-    title: "Ensure no duplicate UIDs exist."
-    description: "Although the useradd program will not let you create a duplicate User ID (UID), it is possible for an administrator to manually edit the /etc/passwd file and change the UID field."
-    rationale: "Users must be assigned unique UIDs for accountability and to ensure appropriate access protections."
-    remediation: "Based on the results of the audit script, establish unique UIDs and review all files owned by the shared UIDs to determine which UID they are supposed to belong to."
-    compliance:
-      - cis: ["7.2.5"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-    condition: none
-    rules: []
+# # 7.2.5 Ensure no duplicate UIDs exist. (Automated)
+# - id: 18805
+#   title: "Ensure no duplicate UIDs exist."
+#   description: "Although the useradd program will not let you create a duplicate User ID (UID), it is possible for an administrator to manually edit the /etc/passwd file and change the UID field."
+#   rationale: "Users must be assigned unique UIDs for accountability and to ensure appropriate access protections."
+#   remediation: "Based on the results of the audit script, establish unique UIDs and review all files owned by the shared UIDs to determine which UID they are supposed to belong to."
+#   compliance:
+#     - cis: ["7.2.5"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+#   condition: none
+#   rules: []
 
-  # 7.2.6 Ensure no duplicate GIDs exist. (Automated)
-  - id: 18806
-    title: "Ensure no duplicate GIDs exist."
-    description: "Although the groupadd program will not let you create a duplicate Group ID (GID), it is possible for an administrator to manually edit the /etc/group file and change the GID field."
-    rationale: "User groups must be assigned unique GIDs for accountability and to ensure appropriate access protections."
-    remediation: "Based on the results of the audit script, establish unique GIDs and review all files owned by the shared GID to determine which group they are supposed to belong to."
-    compliance:
-      - cis: ["7.2.6"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-    condition: none
-    rules: []
+# # 7.2.6 Ensure no duplicate GIDs exist. (Automated)
+# - id: 18806
+#   title: "Ensure no duplicate GIDs exist."
+#   description: "Although the groupadd program will not let you create a duplicate Group ID (GID), it is possible for an administrator to manually edit the /etc/group file and change the GID field."
+#   rationale: "User groups must be assigned unique GIDs for accountability and to ensure appropriate access protections."
+#   remediation: "Based on the results of the audit script, establish unique GIDs and review all files owned by the shared GID to determine which group they are supposed to belong to."
+#   compliance:
+#     - cis: ["7.2.6"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+#   condition: none
+#   rules: []
 
-  # 7.2.7 Ensure no duplicate user names exist. (Automated)
-  - id: 18807
-    title: "Ensure no duplicate user names exist."
-    description: "Although the useradd program will not let you create a duplicate user name, it is possible for an administrator to manually edit the /etc/passwd file and change the user name."
-    rationale: 'If a user is assigned a duplicate user name, it will create and have access to files with the first UID for that username in /etc/passwd . For example, if "test4" has a UID of 1000 and a subsequent "test4" entry has a UID of 2000, logging in as "test4" will use UID 1000. Effectively, the UID is shared, which is a security problem.'
-    remediation: "Based on the results of the audit script, establish unique user names for the users. File ownerships will automatically reflect the change as long as the users have unique UIDs."
-    compliance:
-      - cis: ["7.2.7"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0004"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-    condition: none
-    rules: []
+# # 7.2.7 Ensure no duplicate user names exist. (Automated)
+# - id: 18807
+#   title: "Ensure no duplicate user names exist."
+#   description: "Although the useradd program will not let you create a duplicate user name, it is possible for an administrator to manually edit the /etc/passwd file and change the user name."
+#   rationale: 'If a user is assigned a duplicate user name, it will create and have access to files with the first UID for that username in /etc/passwd . For example, if "test4" has a UID of 1000 and a subsequent "test4" entry has a UID of 2000, logging in as "test4" will use UID 1000. Effectively, the UID is shared, which is a security problem.'
+#   remediation: "Based on the results of the audit script, establish unique user names for the users. File ownerships will automatically reflect the change as long as the users have unique UIDs."
+#   compliance:
+#     - cis: ["7.2.7"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0004"]
+#     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+#   condition: none
+#   rules: []
 
-  # 7.2.8 Ensure no duplicate group names exist. (Automated)
-  - id: 18808
-    title: "Ensure no duplicate group names exist."
-    description: "Although the groupadd program will not let you create a duplicate group name, it is possible for an administrator to manually edit the /etc/group file and change the group name."
-    rationale: "If a group is assigned a duplicate group name, it will create and have access to files with the first GID for that group in /etc/group . Effectively, the GID is shared, which is a security problem."
-    remediation: "Based on the results of the audit script, establish unique names for the user groups. File group ownerships will automatically reflect the change as long as the groups have unique GIDs."
-    compliance:
-      - cis: ["7.2.8"]
-      - mitre_mitigations: ["M1027"]
-      - mitre_tactics: ["TA0004"]
-      - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
-    condition: none
-    rules: []
+# # 7.2.8 Ensure no duplicate group names exist. (Automated)
+# - id: 18808
+#   title: "Ensure no duplicate group names exist."
+#   description: "Although the groupadd program will not let you create a duplicate group name, it is possible for an administrator to manually edit the /etc/group file and change the group name."
+#   rationale: "If a group is assigned a duplicate group name, it will create and have access to files with the first GID for that group in /etc/group . Effectively, the GID is shared, which is a security problem."
+#   remediation: "Based on the results of the audit script, establish unique names for the user groups. File group ownerships will automatically reflect the change as long as the groups have unique GIDs."
+#   compliance:
+#     - cis: ["7.2.8"]
+#     - mitre_mitigations: ["M1027"]
+#     - mitre_tactics: ["TA0004"]
+#     - mitre_techniques: ["T1078", "T1078.001", "T1078.003"]
+#   condition: none
+#   rules: []
 
-  # 7.2.9 Ensure local interactive user home directories are configured. (Automated)
-  - id: 18809
-    title: "Ensure local interactive user home directories are configured."
-    description: "The user home directory is space defined for the particular user to set local environment variables and to store personal files. While the system administrator can establish secure permissions for users' home directories, the users can easily override these. Users can be defined in /etc/passwd without a home directory or with a home directory that does not actually exist."
-    rationale: 'Since the user is accountable for files stored in the user home directory, the user must be the owner of the directory. Group or world-writable user home directories may enable malicious users to steal or modify other users'' data or to gain another user''s system privileges. If the user''s home directory does not exist or is unassigned, the user will be placed in "/" and will not be able to write any files or have local environment variables set.'
-    remediation: "If a local interactive users' home directory is undefined and/or doesn't exist, follow local site policy and perform one of the following: - Lock the user account - Remove the user from the system - create a directory for the user. If undefined, edit /etc/passwd and add the absolute path to the directory to the last field of the user. Run the following script to: - Remove excessive permissions from local interactive users home directories - Update the home directory's owner #!/usr/bin/env bash { l_output2=\"\" l_valid_shells=\"^($( awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" unset a_uarr && a_uarr=() # Clear and initialize array while read -r l_epu l_eph; do # Populate array with users and user home location a_uarr+=(\"$l_epu $l_eph\") done <<< \"$(awk -v pat=\"$l_valid_shells\" -F: '$(NF) ~ pat { print $1 \" \" $(NF-1) }' /etc/passwd)\" l_asize=\"${#a_uarr[@]}\" # Here if we want to look at number of users before proceeding [ \"$l_asize \" -gt \"10000\" ] && echo -e \"\\n ** INFO **\\n - \\\"$l_asize\\\" Local interactive users found on the system\\n - This may be a long running process\\n\" while read -r l_user l_home; do if [ -d \"$l_home\" ]; then l_mask='0027' l_max=\"$( printf '%o' $(( 0777 & ~$l_mask)) )\" while read -r l_own l_mode; do if [ \"$l_user\" != \"$l_own\" ]; then l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" is owned by: \\\"$l_own\\\"\\n - changing ownership to: \\\"$l_user\\\"\\n\" chown \"$l_user\" \"$l_home\" fi if [ $(( $l_mode & $l_mask )) -gt 0 ]; then l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" is mode: \\\"$l_mode\\\" should be mode: \\\"$l_max\\\" or more restrictive\\n - removing excess permissions\\n\" chmod g-w,o-rwx \"$l_home\" fi done <<< \"$(stat -Lc '%U %#a' \"$l_home\")\" else l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" Doesn't exist\\n - Please create a home in accordance with local site policy\" fi done <<< \"$(printf '%s\\n' \"${a_uarr[@]}\")\" if [ -z \"$l_output2\" ]; then # If l_output2 is empty, we pass echo -e \" - No modification needed to local interactive users home directories\" else echo -e \"\\n$l_output2\" fi }."
-    compliance:
-      - cis: ["7.2.9"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques: ["T1222", "T1222.002"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.9 Ensure local interactive user home directories are configured. (Automated)
+# - id: 18809
+#   title: "Ensure local interactive user home directories are configured."
+#   description: "The user home directory is space defined for the particular user to set local environment variables and to store personal files. While the system administrator can establish secure permissions for users' home directories, the users can easily override these. Users can be defined in /etc/passwd without a home directory or with a home directory that does not actually exist."
+#   rationale: 'Since the user is accountable for files stored in the user home directory, the user must be the owner of the directory. Group or world-writable user home directories may enable malicious users to steal or modify other users'' data or to gain another user''s system privileges. If the user''s home directory does not exist or is unassigned, the user will be placed in "/" and will not be able to write any files or have local environment variables set.'
+#   remediation: "If a local interactive users' home directory is undefined and/or doesn't exist, follow local site policy and perform one of the following: - Lock the user account - Remove the user from the system - create a directory for the user. If undefined, edit /etc/passwd and add the absolute path to the directory to the last field of the user. Run the following script to: - Remove excessive permissions from local interactive users home directories - Update the home directory's owner #!/usr/bin/env bash { l_output2=\"\" l_valid_shells=\"^($( awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" unset a_uarr && a_uarr=() # Clear and initialize array while read -r l_epu l_eph; do # Populate array with users and user home location a_uarr+=(\"$l_epu $l_eph\") done <<< \"$(awk -v pat=\"$l_valid_shells\" -F: '$(NF) ~ pat { print $1 \" \" $(NF-1) }' /etc/passwd)\" l_asize=\"${#a_uarr[@]}\" # Here if we want to look at number of users before proceeding [ \"$l_asize \" -gt \"10000\" ] && echo -e \"\\n ** INFO **\\n - \\\"$l_asize\\\" Local interactive users found on the system\\n - This may be a long running process\\n\" while read -r l_user l_home; do if [ -d \"$l_home\" ]; then l_mask='0027' l_max=\"$( printf '%o' $(( 0777 & ~$l_mask)) )\" while read -r l_own l_mode; do if [ \"$l_user\" != \"$l_own\" ]; then l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" is owned by: \\\"$l_own\\\"\\n - changing ownership to: \\\"$l_user\\\"\\n\" chown \"$l_user\" \"$l_home\" fi if [ $(( $l_mode & $l_mask )) -gt 0 ]; then l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" is mode: \\\"$l_mode\\\" should be mode: \\\"$l_max\\\" or more restrictive\\n - removing excess permissions\\n\" chmod g-w,o-rwx \"$l_home\" fi done <<< \"$(stat -Lc '%U %#a' \"$l_home\")\" else l_output2=\"$l_output2\\n - User: \\\"$l_user\\\" Home \\\"$l_home\\\" Doesn't exist\\n - Please create a home in accordance with local site policy\" fi done <<< \"$(printf '%s\\n' \"${a_uarr[@]}\")\" if [ -z \"$l_output2\" ]; then # If l_output2 is empty, we pass echo -e \" - No modification needed to local interactive users home directories\" else echo -e \"\\n$l_output2\" fi }."
+#   compliance:
+#     - cis: ["7.2.9"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques: ["T1222", "T1222.002"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []
 
-  # 7.2.10 Ensure local interactive user dot files access is configured. (Automated)
-  - id: 18810
-    title: "Ensure local interactive user dot files access is configured."
-    description: 'While the system administrator can establish secure permissions for users'' "dot" files, the users can easily override these. - .forward file specifies an email address to forward the user''s mail to. - .rhost file provides the "remote authentication" database for the rcp, rlogin, and rsh commands and the rcmd() function. These files bypass the standard password-based user authentication mechanism. They specify remote hosts and users that are considered trusted (i.e. are allowed to access the local system without supplying a password) - .netrc file contains data for logging into a remote host or passing authentication to an API. - .bash_history file keeps track of the user’s commands.'
-    rationale: "User configuration files with excessive or incorrect access may enable malicious users to steal or modify other users' data or to gain another user's system privileges."
-    remediation: "Making global modifications to users' files without alerting the user community can result in unexpected outages and unhappy users. Therefore, it is recommended that a monitoring policy be established to report user dot file permissions and determine the action to be taken in accordance with site policy. The following script will: - remove excessive permissions on dot files within interactive users' home directories - change ownership of dot files within interactive users' home directories to the user - change group ownership of dot files within interactive users' home directories to the user's primary group list .forward and .rhost files to be investigated and manually deleted - #!/usr/bin/env bash { a_output2=(); a_output3=() l_maxsize=\"1000\" # Maximum number of local interactive users before warning (Default 1,000) l_valid_shells=\"^($( awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" a_user_and_home=() # Create array with local users and their home directories while read -r l_local_user l_local_user_home; do # Populate array with users and user home location [[ -n \"$l_local_user\" && -n \"$l_local_user_home\" ]] && a_user_and_home+=(\"$l_local_user:$l_local_user_home\") done <<< \"$(awk -v pat=\"$l_valid_shells\" -F: '$(NF) ~ pat { print $1 \" \" $(NF-1) }' /etc/passwd)\" l_asize=\"${#a_user_and_home[@]}\" # Here if we want to look at number of users before proceeding [ \"${#a_user_and_home[@]}\" -gt \"$l_maxsize\" ] && printf '%s\\n' \"\" \" ** INFO **\" \\ \" - \\\"$l_asize\\\" Local interactive users found on the system\" \\ \" - This may be a long running check\" \"\" file_access_fix() { a_access_out=() l_max=\"$( printf '%o' $(( 0777 & ~$l_mask)) )\" if [ $(( $l_mode & $l_mask )) -gt 0 ]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" is mode: \\\"$l_mode\\\" and should be mode: \\\"$l_max\\\" or more restrictive\" \\ \" Updating file: \\\"$l_hdfile\\\" to be mode: \\\"$l_max\\\" or more restrictive\" chmod \"$l_change\" \"$l_hdfile\" fi if [[ ! \"$l_owner\" =~ ($l_user) ]]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" owned by: \\\"$l_owner\\\" and should be owned by \\\"${l_user//|/ or }\\\"\" \\ \" Updating file: \\\"$l_hdfile\\\" to be owned by \\\"${l_user//|/ or }\\\"\" chown \"$l_user\" \"$l_hdfile\" fi if [[ ! \"$l_gowner\" =~ ($l_group) ]]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" group owned by: \\\"$l_gowner\\\" and should be group owned by \\\"${l_group//|/ or }\\\"\" \\ \" Updating file: \\\"$l_hdfile\\\" to be group owned by \\\"${l_group//|/ or }\\\"\" chgrp \"$l_group\" \"$l_hdfile\" fi } while IFS=: read -r l_user l_home; do a_dot_file=(); a_netrc=(); a_netrc_warn=(); a_bhout=(); a_hdirout=() if [ -d \"$l_home\" ]; then l_group=\"$(id -gn \"$l_user\" | xargs)\";l_group=\"${l_group// /|}\" while IFS= read -r -d $'\\0' l_hdfile; do while read -r l_mode l_owner l_gowner; do case \"$(basename \"$l_hdfile\")\" in .forward | .rhost ) a_dot_file+=(\" - File: \\\"$l_hdfile\\\" exists\" \" Please review and manually delete this file\") ;; .netrc ) l_mask='0177'; l_change=\"u-x,go-rwx\"; file_access_fix a_netrc_warn+=(\" - File: \\\"$l_hdfile\\\" exists\") ;; .bash_history ) l_mask='0177'; l_change=\"u-x,go-rwx\"; file_access_fix ;; * ) l_mask='0133'; l_change=\"u-x,go-wx\"; file_access_fix ;; esac done < <(stat -Lc '%#a %U %G' \"$l_hdfile\") done < <(find \"$l_home\" -xdev -type f -name '.*' -print0) fi [ \"${#a_dot_file[@]}\" -gt 0 ] && a_output2+=(\" - User: \\\"$l_user\\\" Home Directory: \\\"$l_home\\\"\" \"${a_dot_file[@]}\") [ \"${#a_netrc_warn[@]}\" -gt 0 ] && a_output3+=(\" - User: \\\"$l_user\\\" Home Directory: \\\"$l_home\\\"\" \"${a_netrc_warn[@]}\") done <<< \"$(printf '%s\\n' \"${a_user_and_home[@]}\")\" [ \"${#a_output3[@]}\" -gt 0 ] && printf '%s\\n' \"\" \" ** WARNING **\" \"${a_output3[@]}\" \"\" [ \"${#a_output2[@]}\" -gt 0 ] && printf '%s\\n' \"\" \"${a_output2[@]}\" }."
-    compliance:
-      - cis: ["7.2.10"]
-      - cis_csc_v8: ["3.3"]
-      - cis_csc_v7: ["14.6"]
-      - cmmc_v2.0:
-          [
-            "AC.L1-3.1.1",
-            "AC.L1-3.1.2",
-            "AC.L2-3.1.3",
-            "AC.L2-3.1.5",
-            "MP.L2-3.8.2",
-          ]
-      - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
-      - iso_27001-2013: ["A.9.1.1"]
-      - mitre_mitigations: ["M1022"]
-      - mitre_tactics: ["TA0005"]
-      - mitre_techniques:
-          ["T1222", "T1222.001", "T1222.002", "T1552", "T1552.003", "T1552.004"]
-      - nist_sp_800-53: ["AC-5", "AC-6"]
-      - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
-      - pci_dss_v4.0: ["1.3.1", "7.1"]
-      - soc_2: ["CC5.2", "CC6.1"]
-    condition: none
-    rules: []
+# # 7.2.10 Ensure local interactive user dot files access is configured. (Automated)
+# - id: 18810
+#   title: "Ensure local interactive user dot files access is configured."
+#   description: 'While the system administrator can establish secure permissions for users'' "dot" files, the users can easily override these. - .forward file specifies an email address to forward the user''s mail to. - .rhost file provides the "remote authentication" database for the rcp, rlogin, and rsh commands and the rcmd() function. These files bypass the standard password-based user authentication mechanism. They specify remote hosts and users that are considered trusted (i.e. are allowed to access the local system without supplying a password) - .netrc file contains data for logging into a remote host or passing authentication to an API. - .bash_history file keeps track of the user’s commands.'
+#   rationale: "User configuration files with excessive or incorrect access may enable malicious users to steal or modify other users' data or to gain another user's system privileges."
+#   remediation: "Making global modifications to users' files without alerting the user community can result in unexpected outages and unhappy users. Therefore, it is recommended that a monitoring policy be established to report user dot file permissions and determine the action to be taken in accordance with site policy. The following script will: - remove excessive permissions on dot files within interactive users' home directories - change ownership of dot files within interactive users' home directories to the user - change group ownership of dot files within interactive users' home directories to the user's primary group list .forward and .rhost files to be investigated and manually deleted - #!/usr/bin/env bash { a_output2=(); a_output3=() l_maxsize=\"1000\" # Maximum number of local interactive users before warning (Default 1,000) l_valid_shells=\"^($( awk -F\\/ '$NF != \"nologin\" {print}' /etc/shells | sed -rn '/^\\//{s,/,\\\\\\\\/,g;p}' | paste -s -d '|' - ))$\" a_user_and_home=() # Create array with local users and their home directories while read -r l_local_user l_local_user_home; do # Populate array with users and user home location [[ -n \"$l_local_user\" && -n \"$l_local_user_home\" ]] && a_user_and_home+=(\"$l_local_user:$l_local_user_home\") done <<< \"$(awk -v pat=\"$l_valid_shells\" -F: '$(NF) ~ pat { print $1 \" \" $(NF-1) }' /etc/passwd)\" l_asize=\"${#a_user_and_home[@]}\" # Here if we want to look at number of users before proceeding [ \"${#a_user_and_home[@]}\" -gt \"$l_maxsize\" ] && printf '%s\\n' \"\" \" ** INFO **\" \\ \" - \\\"$l_asize\\\" Local interactive users found on the system\" \\ \" - This may be a long running check\" \"\" file_access_fix() { a_access_out=() l_max=\"$( printf '%o' $(( 0777 & ~$l_mask)) )\" if [ $(( $l_mode & $l_mask )) -gt 0 ]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" is mode: \\\"$l_mode\\\" and should be mode: \\\"$l_max\\\" or more restrictive\" \\ \" Updating file: \\\"$l_hdfile\\\" to be mode: \\\"$l_max\\\" or more restrictive\" chmod \"$l_change\" \"$l_hdfile\" fi if [[ ! \"$l_owner\" =~ ($l_user) ]]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" owned by: \\\"$l_owner\\\" and should be owned by \\\"${l_user//|/ or }\\\"\" \\ \" Updating file: \\\"$l_hdfile\\\" to be owned by \\\"${l_user//|/ or }\\\"\" chown \"$l_user\" \"$l_hdfile\" fi if [[ ! \"$l_gowner\" =~ ($l_group) ]]; then printf '%s\\n' \"\" \" - File: \\\"$l_hdfile\\\" group owned by: \\\"$l_gowner\\\" and should be group owned by \\\"${l_group//|/ or }\\\"\" \\ \" Updating file: \\\"$l_hdfile\\\" to be group owned by \\\"${l_group//|/ or }\\\"\" chgrp \"$l_group\" \"$l_hdfile\" fi } while IFS=: read -r l_user l_home; do a_dot_file=(); a_netrc=(); a_netrc_warn=(); a_bhout=(); a_hdirout=() if [ -d \"$l_home\" ]; then l_group=\"$(id -gn \"$l_user\" | xargs)\";l_group=\"${l_group// /|}\" while IFS= read -r -d $'\\0' l_hdfile; do while read -r l_mode l_owner l_gowner; do case \"$(basename \"$l_hdfile\")\" in .forward | .rhost ) a_dot_file+=(\" - File: \\\"$l_hdfile\\\" exists\" \" Please review and manually delete this file\") ;; .netrc ) l_mask='0177'; l_change=\"u-x,go-rwx\"; file_access_fix a_netrc_warn+=(\" - File: \\\"$l_hdfile\\\" exists\") ;; .bash_history ) l_mask='0177'; l_change=\"u-x,go-rwx\"; file_access_fix ;; * ) l_mask='0133'; l_change=\"u-x,go-wx\"; file_access_fix ;; esac done < <(stat -Lc '%#a %U %G' \"$l_hdfile\") done < <(find \"$l_home\" -xdev -type f -name '.*' -print0) fi [ \"${#a_dot_file[@]}\" -gt 0 ] && a_output2+=(\" - User: \\\"$l_user\\\" Home Directory: \\\"$l_home\\\"\" \"${a_dot_file[@]}\") [ \"${#a_netrc_warn[@]}\" -gt 0 ] && a_output3+=(\" - User: \\\"$l_user\\\" Home Directory: \\\"$l_home\\\"\" \"${a_netrc_warn[@]}\") done <<< \"$(printf '%s\\n' \"${a_user_and_home[@]}\")\" [ \"${#a_output3[@]}\" -gt 0 ] && printf '%s\\n' \"\" \" ** WARNING **\" \"${a_output3[@]}\" \"\" [ \"${#a_output2[@]}\" -gt 0 ] && printf '%s\\n' \"\" \"${a_output2[@]}\" }."
+#   compliance:
+#     - cis: ["7.2.10"]
+#     - cis_csc_v8: ["3.3"]
+#     - cis_csc_v7: ["14.6"]
+#     - cmmc_v2.0:
+#         [
+#           "AC.L1-3.1.1",
+#           "AC.L1-3.1.2",
+#           "AC.L2-3.1.3",
+#           "AC.L2-3.1.5",
+#           "MP.L2-3.8.2",
+#         ]
+#     - hipaa: ["164.308(a)(3)(i)", "164.308(a)(3)(ii)(A)", "164.312(a)(1)"]
+#     - iso_27001-2013: ["A.9.1.1"]
+#     - mitre_mitigations: ["M1022"]
+#     - mitre_tactics: ["TA0005"]
+#     - mitre_techniques:
+#         ["T1222", "T1222.001", "T1222.002", "T1552", "T1552.003", "T1552.004"]
+#     - nist_sp_800-53: ["AC-5", "AC-6"]
+#     - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
+#     - pci_dss_v4.0: ["1.3.1", "7.1"]
+#     - soc_2: ["CC5.2", "CC6.1"]
+#   condition: none
+#   rules: []

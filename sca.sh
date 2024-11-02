@@ -145,10 +145,7 @@ run_check() {
     ;;
   c:*)
     local command="${type_part#c:}"
-    command="${command//\\\"/\"}" # Remove backslash before double quotes
-    command="${command//\\\'/\'}" # Remove backslash before double quotes
-    command="${command//\\\\/\\}" # Remove double backslashes
-    output=$(eval "$command" 2>&1)
+    output=$(eval "sh -c \"$command\"" 2>&1)
     ;;
   p:*)
     # NOTE: not tested
@@ -198,24 +195,29 @@ run_check() {
         fi
 
         cleaned_files=$(echo "$matching_files" | awk '/^\+OSRegex_Execute:/ {print $2}' | sort -u 2>&1)
-        IFS=$'\n' read -rd '' -a cleaned_files_array <<<"$cleaned_files"
+        if [[ -n "$cleaned_files" ]]; then
+          IFS=$'\n' read -rd '' -a cleaned_files_array <<<"$cleaned_files"
 
-        local success_file_search=0
-        for file in "${cleaned_files_array[@]}"; do
-          local file_output
-          file_output=$(cat "$file" 2>&1)
-          if process_file_check "$file_content_regex_search" "$file_output"; then
-            success_file_search=1
-          fi
-        done
+          for file in "${cleaned_files_array[@]}"; do
+            local file_output
+            file_output=$(cat "$file" 2>&1)
+            if process_file_check "$file_content_regex_search" "$file_output"; then
+              print_message success "$id" "$title" "$file_content_regex_search" "$type_part_o" "File '$file' passed content checks" "$negate"
+              return $?
+            fi
+          done
 
-        if [[ $success_file_search == 1 ]]; then
-          print_message success "$id" "$title" "$file_content_regex_search" "$type_part_o" "File '$file' passed content checks" "$negate"
-          return $?
-        else
-          print_message failed "$id" "$title" "$file_content_regex_search" "$type_part_o" "File '$file' failed content checks" "$negate"
-          return $?
+          # # Concatenate all files and check the complete content at once
+          # local all_files_output
+          # all_files_output=$(cat "${cleaned_files_array[@]}" 2>&1)
+          # if process_file_check "$file_content_regex_search" "$all_files_output"; then
+          #   print_message success "$id" "$title" "$file_content_regex_search" "$type_part_o" "Found searched content inside files" "$negate"
+          #   return $?
+          # fi
         fi
+
+        print_message failed "$id" "$title" "$file_content_regex_search" "$type_part_o" "No files contains searched content" "$negate"
+        return $?
       fi
     fi
     ;;
@@ -287,12 +289,13 @@ process_file_check() {
     esac
 
     match_output=$(echo "$output_result" | LD_LIBRARY_PATH="$LD_LIBRARY_PATH" "$WAZUH_REGEX_PATH" "$regex" 2>&1)
-    match_output=$(echo "$match_output" | sed -E 's/^\+OS(Match_Compile|_Match2|Regex_Execute|_Regex)[[:space:]]*:[[:space:]]*//')
+    match_output=$(echo "$match_output" | sed -E 's/^\s*\+OS(Match_Compile|_Match2|Regex_Execute|_Regex)[[:space:]]*:[[:space:]]*//' | sort -u)
 
     if [[ -n "$match_output" ]]; then
       if [[ -n "$compare" && -n "$verify" ]]; then
-        if [[ "$match_output" =~ \-Substring:\ ([0-9]+) ]]; then
+        if [[ "$match_output" =~ \-Substring:\ (-?[0-9]+) ]]; then
           local captured_value="${BASH_REMATCH[1]}" # Extract captured number
+
           if compare_values "$captured_value" "$compare" "$verify"; then
             output_result=$match_output
             success=1
