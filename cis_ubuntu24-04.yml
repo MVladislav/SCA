@@ -1223,10 +1223,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+loaded compare > 0
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+in\s+kill\s+mode compare == 0
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+in\s+unconfined\s+mode compare == 0
-      - c:apparmor_status -> n:^(\d+)\s+processes\s+are\s+unconfined compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+loaded compare > 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+in\s+kill\s+mode compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+in\s+unconfined\s+mode compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+processes\s+are\s+unconfined compare == 0
 
   # 1.3.1.4 Ensure all AppArmor Profiles are enforcing. (Automated)
   - id: 18541
@@ -1257,12 +1257,12 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+loaded compare > 0
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+in\s+enforce\s+mode compare > 0
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+in\s+kill\s+mode compare == 0
-      - c:apparmor_status -> n:^(\d+)\s+profiles\s+are\s+in\s+unconfined\s+mode compare == 0
-      - c:apparmor_status -> n:^(\d+)\s*profiles\s+are\s+in\s+complain\s+mode compare == 0
-      - c:apparmor_status -> n:^(\d+)\s*processes\s+are\s+unconfined compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+loaded compare > 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+in\s+enforce\s+mode compare > 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+in\s+kill\s+mode compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s+profiles\s+are\s+in\s+unconfined\s+mode compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s*profiles\s+are\s+in\s+complain\s+mode compare == 0
+      - c:apparmor_status -> n:^(\p*\d+)\s*processes\s+are\s+unconfined compare == 0
 
   # 1.4.1 Ensure bootloader password is set. (Automated)
   - id: 18542
@@ -1685,9 +1685,9 @@ checks:
     condition: all
     rules:
       - d:/etc/dconf/db/local.d -> r:\. -> r:^[org/gnome/desktop/session]
-      - d:/etc/dconf/db/local.d -> r:\. -> n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare <= 900 && n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare > 0
+      - d:/etc/dconf/db/local.d -> r:\. -> n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\p*\d+) compare <= 900 && n:^idle-delay\s*\t*=\s*\t*uint32\s*\t*(\p*\d+) compare > 0
       - d:/etc/dconf/db/local.d -> r:\. -> r:^[org/gnome/desktop/screensaver]
-      - d:/etc/dconf/db/local.d -> r:\. -> n:^lock-delay\s*\t*=\s*\t*uint32\s*\t*(\d+) compare <= 5
+      - d:/etc/dconf/db/local.d -> r:\. -> n:^lock-delay\s*\t*=\s*\t*uint32\s*\t*(\p*\d+) compare <= 5
 
   # 1.7.5 Ensure GDM screen locks cannot be overridden. (Automated)
   - id: 18559
@@ -2525,8 +2525,8 @@ checks:
       - soc_2: ["CC4.1", "CC5.2"]
     condition: all
     rules:
-      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare == 1'
-      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare == 1'
+      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare == 1'
+      - 'c:sh -c "systemctl show chrony.service systemd-timesyncd.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare == 1'
 
   # 2.3.2.1 Ensure systemd-timesyncd configured with authorized timeserver. (Automated)
   - id: 18594
@@ -3398,8 +3398,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: all
     rules:
-      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare == 1'
-      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare == 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare == 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare == 1'
 
   # 4.2.1 Ensure ufw is installed. (Automated)
   - id: 18627
@@ -3630,8 +3630,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
-      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service nft.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare <= 1'
 
   # # 4.3.3 Ensure iptables are flushed with nftables. (Manual) - Not implemented
   # - id: 18636
@@ -3885,8 +3885,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
-      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare <= 1'
+      - 'c:sh -c "systemctl show nft.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare <= 1'
 
   # 4.4.1.3 Ensure ufw is not in use with iptables. (Automated)
   - id: 18646
@@ -3909,8 +3909,8 @@ checks:
       - soc_2: ["CC6.6"]
     condition: any
     rules:
-      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare <= 1'
-      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare <= 1'
+      - 'c:sh -c "systemctl show ufw.service iptables.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare <= 1'
 
   # 4.4.2.1 Ensure iptables default deny firewall policy. (Automated)
   - id: 18647
@@ -4168,9 +4168,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0600''" -> n:^(\d+) compare == 0'
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0600''" -> n:^(\p*\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*private[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
 
   # 5.1.3 Ensure permissions on SSH public host key files are configured. (Automated)
   - id: 18657
@@ -4201,9 +4201,9 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0(644|640|600|604)''" -> n:^(\d+) compare == 0'
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
-      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%#a'' {} | grep -cvE ''^0(644|640|600|604)''" -> n:^(\p*\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%U'' {} | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
+      - 'c:sh -c "file /etc/ssh/* | grep -E ''OpenSSH[[:space:]].*public[[:space:]]key'' | cut -d: -f1 | xargs -I {} stat -Lc ''%G'' {} | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
 
   # 5.1.4 Ensure sshd access is configured. (Automated)
   - id: 18658
@@ -4311,8 +4311,8 @@ checks:
       - mitre_techniques: ["T1078", "T1078.001", "T1078.002", "T1078.003"]
     condition: all
     rules:
-      - c:sshd -T -> n:^clientaliveinterval\s*\t*(\d+) compare > 0
-      - c:sshd -T -> n:^clientalivecountmax\s*\t*(\d+) compare > 0
+      - c:sshd -T -> n:^clientaliveinterval\s*\t*(\p*\d+) compare > 0
+      - c:sshd -T -> n:^clientalivecountmax\s*\t*(\p*\d+) compare > 0
 
   # 5.1.8 Ensure sshd DisableForwarding is enabled. (Automated)
   - id: 18662
@@ -4446,7 +4446,7 @@ checks:
       - mitre_techniques: ["T1110", "T1110.001", "T1110.003", "T1110.004"]
     condition: all
     rules:
-      - c:sshd -T -> n:^logingracetime\s*\t*(\d+) compare >= 1 && n:^logingracetime\s*\t*(\d+) compare <= 60
+      - c:sshd -T -> n:^logingracetime\s*\t*(\p*\d+) compare >= 1 && n:^logingracetime\s*\t*(\p*\d+) compare <= 60
 
   # 5.1.14 Ensure sshd LogLevel is configured. (Automated)
   - id: 18668
@@ -4548,7 +4548,7 @@ checks:
       - soc_2: ["CC5.2", "CC7.2"]
     condition: all
     rules:
-      - c:sshd -T -> n:^maxauthtries\s*\t*(\d+) compare <= 4
+      - c:sshd -T -> n:^maxauthtries\s*\t*(\p*\d+) compare <= 4
 
   # 5.1.17 Ensure sshd MaxSessions is configured. (Automated)
   - id: 18671
@@ -4562,7 +4562,7 @@ checks:
       - mitre_techniques: ["T1499", "T1499.002"]
     condition: all
     rules:
-      - c:sshd -T -> n:^maxsessions\s*\t*(\d+) compare <= 10
+      - c:sshd -T -> n:^maxsessions\s*\t*(\p*\d+) compare <= 10
 
   # 5.1.18 Ensure sshd MaxStartups is configured. (Automated)
   - id: 18672
@@ -4576,9 +4576,9 @@ checks:
       - mitre_techniques: ["T1499", "T1499.002"]
     condition: all
     rules:
-      - c:sshd -T -> n:^maxstartups\s*\t*(\d+):\d+:\d+ compare >= 10
-      - c:sshd -T -> n:^maxstartups\s*\t*\d+:(\d+):\d+ compare >= 30
-      - c:sshd -T -> n:^maxstartups\s*\t*\d+:\d+:(\d+) compare >= 60
+      - c:sshd -T -> n:^maxstartups\s*\t*(\p*\d+):\d+:\d+ compare >= 10
+      - c:sshd -T -> n:^maxstartups\s*\t*\d+:(\p*\d+):\d+ compare >= 30
+      - c:sshd -T -> n:^maxstartups\s*\t*\d+:\d+:(\p*\d+) compare >= 60
 
   # 5.1.19 Ensure sshd PermitEmptyPasswords is disabled. (Automated)
   - id: 18673
@@ -4799,9 +4799,9 @@ checks:
       - soc_2: ["CC6.1", "CC6.3"]
     condition: any
     rules:
-      - 'f:/etc/sudoers -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare >= 0'
-      - 'd:/etc/sudoers.d -> r:\.* -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\d+) compare >= 0'
-      - 'c:sudo -V -> n:Authentication timestamp timeout:\s*\t*(\d+) compare <= 15 && n:Authentication timestamp timeout:\s*\t*(\d+) compare >= 0'
+      - 'f:/etc/sudoers -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\p*\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\p*\d+) compare >= 0'
+      - 'd:/etc/sudoers.d -> r:\.* -> !r:^\s*\t*# && n:timestamp_timeout\s*\t*=\s*\t*(\p*\d+) compare <= 15 && n:timestamp_timeout\s*\t*=\s*\t*(\p*\d+) compare >= 0'
+      - 'c:sudo -V -> n:Authentication timestamp timeout:\s*\t*(\p*\d+) compare <= 15 && n:Authentication timestamp timeout:\s*\t*(\p*\d+) compare >= 0'
 
   # 5.2.7 Ensure access to the su command is restricted. (Automated)
   - id: 18683
@@ -5026,7 +5026,7 @@ checks:
       - soc_2: ["CC6.2", "CC6.3"]
     condition: all
     rules:
-      - f:/etc/security/faillock.conf -> n:^deny\s*\t*=\s*\t*(\d+) compare <= 5
+      - f:/etc/security/faillock.conf -> n:^deny\s*\t*=\s*\t*(\p*\d+) compare <= 5
 
   # 5.3.3.1.2 Ensure password unlock time is configured. (Automated)
   - id: 18692
@@ -5051,8 +5051,8 @@ checks:
       - soc_2: ["CC6.2", "CC6.3"]
     condition: any
     rules:
-      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\d+) compare == 0
-      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\d+) compare >= 900
+      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\p*\d+) compare == 0
+      - f:/etc/security/faillock.conf -> n:^unlock_time\s*\t*=\s*\t*(\p*\d+) compare >= 900
 
   # 5.3.3.1.3 Ensure password failed attempts lockout includes root account. (Automated)
   - id: 18693
@@ -5078,7 +5078,7 @@ checks:
     condition: any
     rules:
       - f:/etc/security/faillock.conf -> r:^even_deny_root
-      - f:/etc/security/faillock.conf -> n:^root_unlock_time\s*\t*=\s*\t*(\d+) compare >= 60
+      - f:/etc/security/faillock.conf -> n:^root_unlock_time\s*\t*=\s*\t*(\p*\d+) compare >= 60
 
   # 5.3.3.2.1 Ensure password number of changed characters is configured. (Automated)
   - id: 18694
@@ -5109,8 +5109,8 @@ checks:
       - soc_2: ["CC6.1"]
     condition: any
     rules:
-      - f:/etc/security/pwquality.conf -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
-      - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^difok\s*\t*=\s*\t*(\d+) compare >= 2
+      - f:/etc/security/pwquality.conf -> n:^difok\s*\t*=\s*\t*(\p*\d+) compare >= 2
+      - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^difok\s*\t*=\s*\t*(\p*\d+) compare >= 2
 
   # 5.3.3.2.2 Ensure minimum password length is configured. (Automated)
   - id: 18695
@@ -5142,9 +5142,9 @@ checks:
       - soc_2: ["CC6.1"]
     condition: any
     rules:
-      - c:cat /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
-      # - f:/etc/security/pwquality.conf -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
-      # - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^minlen\s*\t*=\s*\t*(\d+) compare >= 14
+      - c:cat /etc/security/pwquality.conf /etc/security/pwquality.conf.d/*.conf -> n:^minlen\s*\t*=\s*\t*(\p*\d+) compare >= 14
+      # - f:/etc/security/pwquality.conf -> n:^minlen\s*\t*=\s*\t*(\p*\d+) compare >= 14
+      # - d:/etc/security/pwquality.conf.d -> r:\.+.conf$ -> n:^minlen\s*\t*=\s*\t*(\p*\d+) compare >= 14
 
   # 5.3.3.2.3 Ensure password complexity is configured. (Manual)
   - id: 18696
@@ -5213,7 +5213,7 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxrepeat\s*\t*=\s*\t*(\d+) compare <= 3 && n:^maxrepeat\s*\t*=\s*\t*(\d+) compare > 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxrepeat\s*\t*=\s*\t*(\p*\d+) compare <= 3 && n:^maxrepeat\s*\t*=\s*\t*(\p*\d+) compare > 0
 
   # 5.3.3.2.5 Ensure password maximum sequential characters is configured. (Automated)
   - id: 18698
@@ -5244,7 +5244,7 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxsequence\s*\t*=\s*\t*(\d+) compare <= 3 && n:^maxsequence\s*\t*=\s*\t*(\d+) compare > 0
+      - d:/etc/security -> r:pwquality.conf|pwquality.conf.d/\..conf -> n:^maxsequence\s*\t*=\s*\t*(\p*\d+) compare <= 3 && n:^maxsequence\s*\t*=\s*\t*(\p*\d+) compare > 0
 
   # 5.3.3.2.6 Ensure password dictionary check is enabled. (Automated)
   - id: 18699
@@ -5342,7 +5342,7 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite\s*\t*pam_pwhistory.so && n:remember=(\d+) compare >= 24
+      - f:/etc/pam.d/common-password -> r:^password\s*\t*requisite\s*\t*pam_pwhistory.so && n:remember=(\p*\d+) compare >= 24
 
   # 5.3.3.3.2 Ensure password history is enforced for the root user. (Automated)
   - id: 18703
@@ -5551,8 +5551,8 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - 'f:/etc/login.defs -> n:^PASS_MAX_DAYS\s*\t*(\d+) compare <= 365 && n:^PASS_MAX_DAYS\s*\t*(\d+) compare > 0'
-      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare <= 365 && n:\.*:\$\.*:\.*:\.*:(\d+):\.*:\.*:\.*: compare > 0'
+      - 'f:/etc/login.defs -> n:^PASS_MAX_DAYS\s*\t*(\p*\d+) compare <= 365 && n:^PASS_MAX_DAYS\s*\t*(\p*\d+) compare > 0'
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:(\p*\d+):\.*:\.*:\.*: compare <= 365 && n:\.*:\$\.*:\.*:\.*:(\p*\d+):\.*:\.*:\.*: compare > 0'
 
   # 5.4.1.2 Ensure minimum password days is configured. (Manual)
   - id: 18710
@@ -5583,8 +5583,8 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - f:/etc/login.defs -> n:^PASS_MIN_DAYS\s*\t*(\d+) compare > 0
-      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:(\d+):\.*:\.*:\.*:\.*: compare > 0'
+      - f:/etc/login.defs -> n:^PASS_MIN_DAYS\s*\t*(\p*\d+) compare > 0
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:(\p*\d+):\.*:\.*:\.*:\.*: compare > 0'
 
   # 5.4.1.3 Ensure password expiration warning days is configured. (Automated)
   - id: 18711
@@ -5616,8 +5616,8 @@ checks:
       - soc_2: ["CC7.1", "CC8.1"]
     condition: all
     rules:
-      - f:/etc/login.defs -> n:^PASS_WARN_AGE\s*\t*(\d+) compare >= 7
-      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:(\d+):\.*:\.*: compare >= 7'
+      - f:/etc/login.defs -> n:^PASS_WARN_AGE\s*\t*(\p*\d+) compare >= 7
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:(\p*\d+):\.*:\.*: compare >= 7'
 
   # 5.4.1.4 Ensure strong password hashing algorithm is configured. (Automated)
   - id: 18712
@@ -5670,8 +5670,8 @@ checks:
       - soc_2: ["CC6.1"]
     condition: all
     rules:
-      - c:useradd -D -> n:^INACTIVE\s*\t*=\s*\t*(\d+) compare <= 45
-      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:\.*:(\d+):\.*: compare <= 45'
+      - c:useradd -D -> n:^INACTIVE\s*\t*=\s*\t*(\p*\d+) compare <= 45
+      - 'f:/etc/shadow -> n:\.*:\$\.*:\.*:\.*:\.*:\.*:(\p*\d+):\.*: compare <= 45'
 
   # # 5.4.1.6 Ensure all users last password change date is in the past. (Automated) - Not Implemented
   # - id: 18714
@@ -5955,7 +5955,7 @@ checks:
       - pci_dss_v4.0: ["8.2.8"]
     condition: all
     rules:
-      - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> n:TMOUT\s*\t*=\s*\t*(\d+) compare <= 900 && n:TMOUT\s*\t*=\s*\t*(\d+) compare > 0
+      - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> n:TMOUT\s*\t*=\s*\t*(\p*\d+) compare <= 900 && n:TMOUT\s*\t*=\s*\t*(\p*\d+) compare > 0
       - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> r:readonly\s*\t*TMOUT
       - c:cat /etc/bashrc /etc/profile /etc/profile.d/*.sh -> r:export\s*\t*TMOUT
 
@@ -6112,8 +6112,8 @@ checks:
     condition: all
     rules:
       # NOTE: not clear defined by CIS
-      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^ActiveState=active\"" -> n:^(\d+) compare >= 1'
-      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^LoadState=loaded\"" -> n:^(\d+) compare >= 1'
+      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^ActiveState=active\"" -> n:^(\p*\d+) compare >= 1'
+      - 'c:sh -c "systemctl show rsyslog.service systemd-journald.service | grep -cE \"^LoadState=loaded\"" -> n:^(\p*\d+) compare >= 1'
 
   # 6.1.2.1.1 Ensure systemd-journal-remote is installed. (Automated)
   - id: 18730
@@ -6820,7 +6820,7 @@ checks:
           ]
     condition: all
     rules:
-      - f:/boot/grub/grub.cfg -> r:^\s*\t*linux && n:audit_backlog_limit=(\d+) compare >= 8192
+      - f:/boot/grub/grub.cfg -> r:^\s*\t*linux && n:audit_backlog_limit=(\p*\d+) compare >= 8192
 
   # 6.2.2.1 Ensure audit log storage size is configured. (Automated)
   - id: 18750
@@ -7739,7 +7739,7 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%a'' {} + | grep -cvE ''^(000|040|200|400|600|240|440|640)''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%a'' {} + | grep -cvE ''^(000|040|200|400|600|240|440|640)''" -> n:^(\p*\d+) compare == 0'
 
   # 6.2.4.6 Ensure audit configuration files owner is configured. (Automated)
   - id: 18780
@@ -7770,7 +7770,7 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%U'' {} + | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%U'' {} + | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
 
   # 6.2.4.7 Ensure audit configuration files group owner is configured. (Automated)
   - id: 18781
@@ -7801,7 +7801,7 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%G'' {} + | grep -cvE ''^root''" -> n:^(\d+) compare == 0'
+      - 'c:sh -c "find /etc/audit/ -type f \\( -name ''*.conf'' -o -name ''*.rules'' \\) -exec stat -Lc ''%G'' {} + | grep -cvE ''^root''" -> n:^(\p*\d+) compare == 0'
 
   # 6.2.4.8 Ensure audit tools mode is configured. (Automated)
   - id: 18782
