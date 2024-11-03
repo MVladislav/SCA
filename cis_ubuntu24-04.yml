@@ -1324,10 +1324,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /boot/grub/grub.cfg -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - 'c:stat /boot/grub/grub.cfg -> r:Access:\s*\(0400/-r--------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /boot/grub/grub.cfg -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /boot/grub/grub.cfg -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /boot/grub/grub.cfg -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /boot/grub/grub.cfg -> r:^root root$
 
   # 1.5.1 Ensure address space layout randomization is enabled. (Automated)
   - id: 18544
@@ -1513,11 +1515,13 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/motd -> r:Access:\s*\(0644/-rw-r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - 'c:stat /etc/motd -> r:Access:\s*\(0444/-r--r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - not f:/etc/motd
+      - f:/etc/motd
+      - c:stat -Lc "%a" /etc/motd -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/motd -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/motd -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/motd -> r:^root root$
 
   # 1.6.5 Ensure access to /etc/issue is configured. (Automated)
   - id: 18553
@@ -1546,10 +1550,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/issue -> r:Access:\s*\(0644/-rw-r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - 'c:stat /etc/issue -> r:Access:\s*\(0444/-r--r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/issue -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/issue -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/issue -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/issue -> r:^root root$
 
   # 1.6.6 Ensure access to /etc/issue.net is configured. (Automated)
   - id: 18554
@@ -1578,10 +1584,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/issue.net -> r:Access:\s*\(0644/-rw-r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - 'c:stat /etc/issue.net -> r:Access:\s*\(0444/-r--r--r--\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/issue.net -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/issue.net -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/issue.net -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/issue.net -> r:^root root$
 
   # 1.7.1 Ensure GDM is removed. (Automated)
   - id: 18555
@@ -2696,9 +2704,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/crontab -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/crontab -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/crontab -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/crontab -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/crontab -> r:^root root$
 
   # 2.4.1.3 Ensure permissions on /etc/cron.hourly are configured. (Automated)
   - id: 18601
@@ -2727,9 +2738,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/cron.hourly/ -> r:Access:\s*\(0700/drwx------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/cron.hourly/ -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /etc/cron.hourly/ -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/cron.hourly/ -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.hourly/ -> r:^root root$
 
   # 2.4.1.4 Ensure permissions on /etc/cron.daily are configured. (Automated)
   - id: 18602
@@ -2758,9 +2772,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/cron.daily/ -> r:Access:\s*\(0700/drwx------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/cron.daily/ -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /etc/cron.daily/ -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/cron.daily/ -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.daily/ -> r:^root root$
 
   # 2.4.1.5 Ensure permissions on /etc/cron.weekly are configured. (Automated)
   - id: 18603
@@ -2789,9 +2806,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/cron.weekly/ -> r:Access:\s*\(0700/drwx------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/cron.weekly/ -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /etc/cron.weekly/ -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/cron.weekly/ -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.weekly/ -> r:^root root$
 
   # 2.4.1.6 Ensure permissions on /etc/cron.monthly are configured. (Automated)
   - id: 18604
@@ -2820,9 +2840,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/cron.monthly/ -> r:Access:\s*\(0700/drwx------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/cron.monthly/ -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /etc/cron.monthly/ -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/cron.monthly/ -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.monthly/ -> r:^root root$
 
   # 2.4.1.7 Ensure permissions on /etc/cron.d are configured. (Automated)
   - id: 18605
@@ -2851,9 +2874,12 @@ checks:
       - pci_dss_v3.2.1: ["7.1", "7.1.1", "7.1.2", "7.1.3"]
       - pci_dss_v4.0: ["1.3.1", "7.1"]
       - soc_2: ["CC5.2", "CC6.1"]
-    condition: any
+    condition: all
     rules:
-      - 'c:stat /etc/cron.d/ -> r:Access:\s*\(0700/drwx------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/cron.d/ -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /etc/cron.d/ -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/cron.d/ -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.d/ -> r:^root root$
 
   # 2.4.1.8 Ensure crontab is restricted to authorized users. (Automated)
   - id: 18606
@@ -2884,8 +2910,16 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:stat /etc/cron.allow -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
-      - 'c:stat /etc/cron.deny -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|No such file or directory'
+      - f:/etc/cron.allow
+      - c:stat -Lc "%a" /etc/cron.allow -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/cron.allow -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/cron.allow -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/cron.allow -> r:^root root$|^root crontab$
+      # - f:/etc/cron.deny
+      # - c:stat -Lc "%a" /etc/cron.deny -> n:^(\d)\d\d$ compare <= 6
+      # - c:stat -Lc "%a" /etc/cron.deny -> n:^\d(\d)\d$ compare <= 4
+      # - c:stat -Lc "%a" /etc/cron.deny -> n:^\d\d(\d)$ compare <= 0
+      # - c:stat -Lc "%U %G" /etc/cron.deny -> r:^root root$|^root crontab$
 
   # 2.4.2.1 Ensure at is restricted to authorized users. (Automated)
   - id: 18607
@@ -2916,8 +2950,16 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:stat /etc/at.allow -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*1/\s*daemon\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*1/\s*daemon\)'
-      - 'c:stat /etc/at.deny -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)|Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*1/\s*daemon\)|Access:\s*\(0640/-rw-r-----\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*1/\s*daemon\)|No such file or directory'
+      - f:/etc/at.allow
+      - c:stat -Lc "%a" /etc/at.allow -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/at.allow -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/at.allow -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/at.allow -> r:^root root$|^root daemon$
+      # - f:/etc/at.deny
+      # - c:stat -Lc "%a" /etc/at.deny -> n:^(\d)\d\d$ compare <= 6
+      # - c:stat -Lc "%a" /etc/at.deny -> n:^\d(\d)\d$ compare <= 4
+      # - c:stat -Lc "%a" /etc/at.deny -> n:^\d\d(\d)$ compare <= 0
+      # - c:stat -Lc "%U %G" /etc/at.deny -> r:^root root$|^root daemon$
 
   # 3.1.1 Ensure IPv6 status is identified. (Manual)
   - id: 18608
@@ -4137,7 +4179,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - 'c:stat /etc/ssh/sshd_config -> r:Access:\s*\(0600/-rw-------\)\s*Uid:\s*\(\s*0/\s*root\)\s*Gid:\s*\(\s*0/\s*root\)'
+      - c:stat -Lc "%a" /etc/ssh/sshd_config -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/ssh/sshd_config -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/ssh/sshd_config -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/ssh/sshd_config -> r:^root root$
 
   # 5.1.2 Ensure permissions on SSH private host key files are configured. (Automated)
   - id: 18656
@@ -7830,24 +7875,24 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /sbin/auditctl -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/auditctl -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/auditctl -> n:^\d\d(\d) compare <= 5
-      - c:stat -Lc "%a" /sbin/aureport -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/aureport -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/aureport -> n:^\d\d(\d) compare <= 5
-      - c:stat -Lc "%a" /sbin/ausearch -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/ausearch -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/ausearch -> n:^\d\d(\d) compare <= 5
-      - c:stat -Lc "%a" /sbin/autrace -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/autrace -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/autrace -> n:^\d\d(\d) compare <= 5
-      - c:stat -Lc "%a" /sbin/auditd -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/auditd -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/auditd -> n:^\d\d(\d) compare <= 5
-      - c:stat -Lc "%a" /sbin/augenrules -> n:^(\d)\d\d compare <= 7
-      - c:stat -Lc "%a" /sbin/augenrules -> n:^\d(\d)\d compare <= 5
-      - c:stat -Lc "%a" /sbin/augenrules -> n:^\d\d(\d) compare <= 5
+      - c:stat -Lc "%a" /sbin/auditctl -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/auditctl -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/auditctl -> n:^\d\d(\d)$ compare <= 5
+      - c:stat -Lc "%a" /sbin/aureport -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/aureport -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/aureport -> n:^\d\d(\d)$ compare <= 5
+      - c:stat -Lc "%a" /sbin/ausearch -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/ausearch -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/ausearch -> n:^\d\d(\d)$ compare <= 5
+      - c:stat -Lc "%a" /sbin/autrace -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/autrace -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/autrace -> n:^\d\d(\d)$ compare <= 5
+      - c:stat -Lc "%a" /sbin/auditd -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/auditd -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/auditd -> n:^\d\d(\d)$ compare <= 5
+      - c:stat -Lc "%a" /sbin/augenrules -> n:^(\d)\d\d$ compare <= 7
+      - c:stat -Lc "%a" /sbin/augenrules -> n:^\d(\d)\d$ compare <= 5
+      - c:stat -Lc "%a" /sbin/augenrules -> n:^\d\d(\d)$ compare <= 5
 
   # 6.2.4.9 Ensure audit tools owner is configured. (Automated)
   - id: 18783
@@ -7878,24 +7923,24 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%U" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%U" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%U" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%U" /sbin/aureport -> r:^root
-      - c:stat -Lc "%U" /sbin/aureport -> r:^root
-      - c:stat -Lc "%U" /sbin/aureport -> r:^root
-      - c:stat -Lc "%U" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%U" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%U" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%U" /sbin/autrace -> r:^root
-      - c:stat -Lc "%U" /sbin/autrace -> r:^root
-      - c:stat -Lc "%U" /sbin/autrace -> r:^root
-      - c:stat -Lc "%U" /sbin/auditd -> r:^root
-      - c:stat -Lc "%U" /sbin/auditd -> r:^root
-      - c:stat -Lc "%U" /sbin/auditd -> r:^root
-      - c:stat -Lc "%U" /sbin/augenrules -> r:^root
-      - c:stat -Lc "%U" /sbin/augenrules -> r:^root
-      - c:stat -Lc "%U" /sbin/augenrules -> r:^root
+      - c:stat -Lc "%U" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%U" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%U" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%U" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%U" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%U" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%U" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%U" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%U" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%U" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%U" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%U" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%U" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%U" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%U" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%U" /sbin/augenrules -> r:^root$
+      - c:stat -Lc "%U" /sbin/augenrules -> r:^root$
+      - c:stat -Lc "%U" /sbin/augenrules -> r:^root$
 
   # 6.2.4.10 Ensure audit tools group owner is configured. (Automated)
   - id: 18784
@@ -7926,24 +7971,24 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%G" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%G" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%G" /sbin/auditctl -> r:^root
-      - c:stat -Lc "%G" /sbin/aureport -> r:^root
-      - c:stat -Lc "%G" /sbin/aureport -> r:^root
-      - c:stat -Lc "%G" /sbin/aureport -> r:^root
-      - c:stat -Lc "%G" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%G" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%G" /sbin/ausearch -> r:^root
-      - c:stat -Lc "%G" /sbin/autrace -> r:^root
-      - c:stat -Lc "%G" /sbin/autrace -> r:^root
-      - c:stat -Lc "%G" /sbin/autrace -> r:^root
-      - c:stat -Lc "%G" /sbin/auditd -> r:^root
-      - c:stat -Lc "%G" /sbin/auditd -> r:^root
-      - c:stat -Lc "%G" /sbin/auditd -> r:^root
-      - c:stat -Lc "%G" /sbin/augenrules -> r:^root
-      - c:stat -Lc "%G" /sbin/augenrules -> r:^root
-      - c:stat -Lc "%G" /sbin/augenrules -> r:^root
+      - c:stat -Lc "%G" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%G" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%G" /sbin/auditctl -> r:^root$
+      - c:stat -Lc "%G" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%G" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%G" /sbin/aureport -> r:^root$
+      - c:stat -Lc "%G" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%G" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%G" /sbin/ausearch -> r:^root$
+      - c:stat -Lc "%G" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%G" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%G" /sbin/autrace -> r:^root$
+      - c:stat -Lc "%G" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%G" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%G" /sbin/auditd -> r:^root$
+      - c:stat -Lc "%G" /sbin/augenrules -> r:^root$
+      - c:stat -Lc "%G" /sbin/augenrules -> r:^root$
+      - c:stat -Lc "%G" /sbin/augenrules -> r:^root$
 
   # 6.3.1 Ensure AIDE is installed. (Automated)
   - id: 18785
@@ -8055,10 +8100,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/passwd -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/passwd -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/passwd -> n:\d\d(\d) compare <= 4
-      - c:stat -Lc "%U %G" /etc/passwd -> r:root root
+      - c:stat -Lc "%a" /etc/passwd -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/passwd -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/passwd -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/passwd -> r:^root root$
 
   # 7.1.2 Ensure permissions on /etc/passwd- are configured. (Automated)
   - id: 18789
@@ -8089,10 +8134,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/passwd- -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/passwd- -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/passwd- -> n:\d\d(\d) compare <= 4
-      - c:stat -Lc "%U %G" /etc/passwd- -> r:root root
+      - c:stat -Lc "%a" /etc/passwd- -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/passwd- -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/passwd- -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/passwd- -> r:^root root$
 
   # 7.1.3 Ensure permissions on /etc/group are configured. (Automated)
   - id: 18790
@@ -8123,10 +8168,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/group -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/group -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/group -> n:\d\d(\d) compare <= 4
-      - c:stat -Lc "%U %G" /etc/group -> r:root root
+      - c:stat -Lc "%a" /etc/group -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/group -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/group -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/group -> r:^root root$
 
   # 7.1.4 Ensure permissions on /etc/group- are configured. (Automated)
   - id: 18791
@@ -8157,10 +8202,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/group- -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/group- -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/group- -> n:\d\d(\d) compare <= 4
-      - c:stat -Lc "%U %G" /etc/group- -> r:root root
+      - c:stat -Lc "%a" /etc/group- -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/group- -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/group- -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/group- -> r:^root root$
 
   # 7.1.5 Ensure permissions on /etc/shadow are configured. (Automated)
   - id: 18792
@@ -8191,10 +8236,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/shadow -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/shadow -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/shadow -> n:\d\d(\d) compare <= 0
-      - c:stat -Lc "%U %G" /etc/shadow -> r:root root|root shadow
+      - c:stat -Lc "%a" /etc/shadow -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/shadow -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/shadow -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/shadow -> r:^root root$|^root shadow$
 
   # 7.1.6 Ensure permissions on /etc/shadow- are configured. (Automated)
   - id: 18793
@@ -8225,10 +8270,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/shadow- -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/shadow- -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/shadow- -> n:\d\d(\d) compare <= 0
-      - c:stat -Lc "%U %G" /etc/shadow- -> r:root root|root shadow
+      - c:stat -Lc "%a" /etc/shadow- -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/shadow- -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/shadow- -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/shadow- -> r:^root root$|^root shadow$
 
   # 7.1.7 Ensure permissions on /etc/gshadow are configured. (Automated)
   - id: 18794
@@ -8259,10 +8304,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/gshadow -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/gshadow -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/gshadow -> n:\d\d(\d) compare <= 0
-      - c:stat -Lc "%U %G" /etc/gshadow -> r:root root|root shadow
+      - c:stat -Lc "%a" /etc/gshadow -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/gshadow -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/gshadow -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/gshadow -> r:^root root$|^root shadow$
 
   # 7.1.8 Ensure permissions on /etc/gshadow- are configured. (Automated)
   - id: 18795
@@ -8293,10 +8338,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/gshadow- -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/gshadow- -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/gshadow- -> n:\d\d(\d) compare <= 0
-      - c:stat -Lc "%U %G" /etc/gshadow- -> r:root root|root shadow
+      - c:stat -Lc "%a" /etc/gshadow- -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/gshadow- -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/gshadow- -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/gshadow- -> r:^root root$|^root shadow$
 
   # 7.1.9 Ensure permissions on /etc/shells are configured. (Automated)
   - id: 18796
@@ -8327,10 +8372,10 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/shells -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/shells -> n:\d(\d)\d compare <= 4
-      - c:stat -Lc "%a" /etc/shells -> n:\d\d(\d) compare <= 4
-      - c:stat -Lc "%U %G" /etc/shells -> r:root root
+      - c:stat -Lc "%a" /etc/shells -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/shells -> n:^\d(\d)\d$ compare <= 4
+      - c:stat -Lc "%a" /etc/shells -> n:^\d\d(\d)$ compare <= 4
+      - c:stat -Lc "%U %G" /etc/shells -> r:^root root$
 
   # 7.1.10 Ensure permissions on /etc/security/opasswd are configured. (Automated)
   - id: 18797
@@ -8361,14 +8406,14 @@ checks:
       - soc_2: ["CC5.2", "CC6.1"]
     condition: all
     rules:
-      - c:stat -Lc "%a" /etc/security/opasswd -> n:(\d)\d\d compare <= 6
-      - c:stat -Lc "%a" /etc/security/opasswd -> n:\d(\d)\d compare <= 0
-      - c:stat -Lc "%a" /etc/security/opasswd -> n:\d\d(\d) compare <= 0
-      - c:stat -Lc "%U %G" /etc/security/opasswd -> r:root root
-      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:(\d)\d\d compare <= 6
-      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:\d(\d)\d compare <= 0
-      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:\d\d(\d) compare <= 0
-      # - c:stat -Lc "%U %G" /etc/security/opasswd.old -> r:root root
+      - c:stat -Lc "%a" /etc/security/opasswd -> n:^(\d)\d\d$ compare <= 6
+      - c:stat -Lc "%a" /etc/security/opasswd -> n:^\d(\d)\d$ compare <= 0
+      - c:stat -Lc "%a" /etc/security/opasswd -> n:^\d\d(\d)$ compare <= 0
+      - c:stat -Lc "%U %G" /etc/security/opasswd -> r:^root root$
+      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:^(\d)\d\d$ compare <= 6
+      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:^\d(\d)\d$ compare <= 0
+      # - c:stat -Lc "%a" /etc/security/opasswd.old -> n:^\d\d(\d)$ compare <= 0
+      # - c:stat -Lc "%U %G" /etc/security/opasswd.old -> r:^root root$
 
   # # 7.1.11 Ensure world writable files and directories are secured. (Automated) - Not implemented
   # - id: 18798
