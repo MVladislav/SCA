@@ -57,7 +57,7 @@ https://raw.githubusercontent.com/wazuh/wazuh/refs/heads/master/ruleset/sca/ubun
 - [x] Section3 (18) (17)
 - [x] Section4 (29) (23)
 - [x] Section5 (71) (68)
-- [ ] Section6 (62) (0)
+- [x] Section6 (62) (53)
 - [ ] Section7 (23) (0)
 
 ---

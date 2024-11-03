@@ -14,7 +14,7 @@ WAZUH_REGEX_PATH="./wazuh-regex"
 # If you have a local manual copy you need to define where the .so files are located
 LD_LIBRARY_PATH=./wazuh-lib/:$LD_LIBRARY_PATH
 # Path to the YAML file
-YAML_FILE="./cis_ubuntu22-04.yml"
+YAML_FILE="./cis_ubuntu24-04.yml"
 # Initialize pass, fail, and skip counters
 total_count=0
 pass_count=0
@@ -162,7 +162,7 @@ run_check() {
     local dir_path="${type_part#d:}"
     if [[ ! -d "$dir_path" ]]; then
       # print_message failed "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" "$negate"
-      print_message not_applicable "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" # "$negate"
+      print_message not_applicable "$id" "$title" "$regex_part" "$type_part_o" "Directory not found" "$negate"
       return $?
     fi
 
@@ -263,17 +263,36 @@ process_file_check() {
     regex="${regex%"${regex##*[![:space:]]}"}" # Remove trailing whitespace
     regex="${regex//\\\\/\\}"                  # Clean up any escaped backslashes
 
+    # Count occurrences of each prefix type in the part
+    count_r=$(grep -o "r:" <<<"$regex" | wc -l)
+    count_n=$(grep -o "n:" <<<"$regex" | wc -l)
+    count_not_r=$(grep -o "!r:" <<<"$regex" | wc -l)
+    count_not_n=$(grep -o "!n:" <<<"$regex" | wc -l)
+    if ((count_r > 1 || count_n > 1 || count_not_r > 1 || count_not_n > 1)); then
+      print_message error "$id" "$title" "$regex_part" "$type_part_o" "Syntax error: Multiple occurrences of 'r:', 'n:', '!r:', or '!n:' in regex '$regex'"
+      return $?
+    fi
+
     success=0
     match_output=""
     compare=""
     verify=""
 
     case "$regex" in
-    r:* | \!r:*)
-      regex="${regex//r:/}" # Remove 'r:' prefix
+    !r:*)
+      regex="!${regex/#\!r:/}" # Remove 'r:' prefix
       ;;
-    n:* | \!n:*)
-      regex="${regex//n:/}" # Remove 'n:' prefix
+    r:*)
+      regex="${regex/#r:/}" # Remove 'r:' prefix
+      ;;
+    \!n:*)
+      regex="!${regex/#\!n:/}" # Remove 'n:' prefix
+      compare=$(echo "$regex" | awk -F ' compare ' '{print $2}' | awk '{print $1}')
+      verify=$(echo "$regex" | awk -F ' compare ' '{print $2}' | awk '{print $2}')
+      regex=$(echo "$regex" | awk -F ' compare ' '{print $1}')
+      ;;
+    n:*)
+      regex="${regex/#n:/}" # Remove 'n:' prefix
       compare=$(echo "$regex" | awk -F ' compare ' '{print $2}' | awk '{print $1}')
       verify=$(echo "$regex" | awk -F ' compare ' '{print $2}' | awk '{print $2}')
       regex=$(echo "$regex" | awk -F ' compare ' '{print $1}')
