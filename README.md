@@ -52,13 +52,13 @@ https://raw.githubusercontent.com/wazuh/wazuh/refs/heads/master/ruleset/sca/ubun
 
 ## SCA :: in work :: CIS Ubuntu 24.04
 
-- [x] Section1 (66) (63)
-- [x] Section2 (43) (42)
-- [x] Section3 (18) (17)
-- [x] Section4 (29) (23)
-- [x] Section5 (71) (68)
-- [x] Section6 (62) (53)
-- [ ] Section7 (23) (0)
+- [x] Section1 (66) (63) (-3)
+- [x] Section2 (43) (42) (-1)
+- [x] Section3 (18) (17) (-1)
+- [x] Section4 (29) (23) (-6)
+- [x] Section5 (71) (68) (-3)
+- [x] Section6 (62) (53) (-9)
+- [x] Section7 (23) (18) (-5)
 
 ---
 

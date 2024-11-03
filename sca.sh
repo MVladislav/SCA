@@ -145,7 +145,11 @@ run_check() {
     ;;
   c:*)
     local command="${type_part#c:}"
-    output=$(eval "sh -c \"$command\"" 2>&1)
+    command="${command//\\\"/\"}" # Remove backslash before double quotes
+    command="${command//\\\'/\'}" # Remove backslash before double quotes
+    command="${command//\\\\/\\}" # Remove double backslashes
+    output=$(eval "$command" 2>&1)
+    # output=$(eval "sh -c \"$command\"" 2>&1)
     ;;
   p:*)
     # NOTE: not tested
