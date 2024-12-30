@@ -67,7 +67,7 @@ repos:
           - --exclude-files=cis_ubuntu24-04.yml
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.21.2
+    rev: v8.22.1
     hooks:
       - id: gitleaks
 
