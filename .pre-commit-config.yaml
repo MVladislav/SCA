@@ -11,7 +11,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         args:
@@ -23,7 +23,7 @@ repos:
           - json
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # Safety
       - id: detect-private-key
@@ -67,12 +67,12 @@ repos:
           - --exclude-files=cis_ubuntu24-04.yml
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.23.1
+    rev: v8.28.0
     hooks:
       - id: gitleaks
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1 # or higher tag
+    rev: v1.37.1 # or higher tag
     hooks:
       - id: yamllint
 
