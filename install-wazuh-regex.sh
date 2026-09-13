@@ -33,6 +33,7 @@ mkdir -p ./wazuh-lib
 cp -r ./wazuh-manager/var/ossec/lib/* ./wazuh-lib/
 
 echo "Cleaning up..."
+chmod -R u+rwX ./wazuh-manager
 rm -rf ./wazuh-manager ./wazuh-manager.deb
 chmod u+x wazuh-regex
 
