@@ -1,21 +1,23 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":prHourlyLimit10", ":prConcurrentLimit5"],
-  "enabledManagers": ["github-actions", "pre-commit"],
+  "dependencyDashboard": false,
+  "labels": ["dependencies"],
+  "extends": ["config:recommended"],
+  "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
+      "addLabels": ["github_actions"],
       "matchManagers": ["github-actions"],
+      "rangeStrategy": "pin",
       "groupName": "GitHub Actions",
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
+      "automerge": false
     },
     {
+      "addLabels": ["pre-commit"],
       "matchManagers": ["pre-commit"],
-      "groupName": "Pre-commit Hooks",
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
+      "rangeStrategy": "pin",
+      "groupName": "Pre-commit hooks",
+      "automerge": false
     }
   ]
 }
