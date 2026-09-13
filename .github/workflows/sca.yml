@@ -1,57 +1,51 @@
 ---
-# workflow
-name: SCA
+name: SCA Tests
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Controls when the workflow will run
 on:
-  # Allows you to run this workflow manually from the Actions tab
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
-  # # Triggers the workflow on push or pull request events but only for the main branch
-  # push:
-  #   branches: [main]
-  # pull_request:
-  #   branches: [main]
+permissions:
+  contents: read
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+concurrency:
+  group: sca-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  test:
+    name: Run SCA tests (${{ matrix.policy }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    strategy:
+      fail-fast: false
+      matrix:
+        policy: [cis_ubuntu24-04.yml, cis_ubuntu22-04.yml, cis_ubuntu26-04.yml]
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
-          echo 'Download wazuh-manager.deb ...'
-          wget -q -O ./wazuh-manager.deb https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-manager/wazuh-manager_4.9.1-1_amd64.deb
-          echo 'Extract wazuh-manager.deb'
-          mkdir -p ./wazuh-manager && dpkg-deb -R ./wazuh-manager.deb ./wazuh-manager
-          echo 'Copy wazuh-regex'
-          cp ./wazuh-manager/var/ossec/bin/wazuh-regex .
-          echo 'Copy needed libs'
-          mkdir -p ./wazuh-lib && cp -r ./wazuh-manager/var/ossec/lib/* ./wazuh-lib
-          echo 'Removed not needed files'
-          sudo rm -rf wazuh-manager*
-          echo 'Make wazuh-regex executable'
-          chmod u+x wazuh-regex
-          echo 'Install dependencies yq + jq'
-          sudo apt install -y yq jq
+          sudo apt-get update
+          sudo apt-get install -y yq jq
 
-      - name: Run script
+      - name: Install wazuh-regex
+        run: ./install-wazuh-regex.sh
+
+      - name: Run SCA tests
         run: |
-          sudo bash ./sca.sh -pdc -f ./cis_ubuntu24-04.yml 2>&1 | tee report.log
+          ./sca.sh -pdc -f ./${{ matrix.policy }} 2>&1 | tee report.log
 
-      - name: Upload output as artifact
+      - name: Upload test report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: report-result
+          name: sca-report-${{ matrix.policy }}
           path: report.log
+          retention-days: 7
