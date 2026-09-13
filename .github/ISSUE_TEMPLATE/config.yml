@@ -1,9 +1,15 @@
 ---
 blank_issues_enabled: false
 contact_links:
-  - name: 🤔 I have a question or need support
+  - name: 💬 General Question / Support
     url: https://github.com/MVladislav/SCA/discussions
-    about: This issue tracker is for bugs only, not general support questions. Please refer to our Discussions.
-  - name: 🚀 Feature Request
-    url: https://github.com/MVladislav/SCA/discussions/new?category=feature-requests
-    about: Remember to search for existing feature requests and "up-vote" any you like.
+    about: Ask questions about usage, Wazuh SCA policies, or get help with sca.sh
+  - name: 🐛 Bug Report
+    url: https://github.com/MVladislav/SCA/issues/new?template=bug_report.yml
+    about: Report a bug in sca.sh or SCA policy testing
+  - name: ✨ Feature Request
+    url: https://github.com/MVladislav/SCA/issues/new?template=feature_request.yml
+    about: Suggest an enhancement for sca.sh
+  - name: 📖 Documentation Improvement
+    url: https://github.com/MVladislav/SCA/issues/new?template=docs.yml
+    about: Report missing or unclear documentation

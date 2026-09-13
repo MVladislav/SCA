@@ -1,3 +1,8 @@
+# Locally installed wazuh-regex tooling (via install-wazuh-regex.sh)
+wazuh-regex
+wazuh-lib/
+wazuh-manager*
+
 # Ignore .hidden files
 .*
 # Ignore everything
@@ -6,6 +11,7 @@
 !.github/
 !.github/**
 
+!.editorconfig
 !.gitattributes
 !.gitignore
 !.gitempty
@@ -21,4 +27,8 @@
 !.yamllint
 
 !sca.sh
+!install-wazuh-regex.sh
+!cis_ubuntu22-04.yml
 !cis_ubuntu24-04.yml
+!cis_ubuntu24-04-v2024.yml
+!cis_ubuntu26-04.yml

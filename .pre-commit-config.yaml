@@ -1,39 +1,29 @@
 ---
-##### CI for use by github no need for action to be added
-##### https://pre-commit.com/hooks.html
-##### Inherited
-ci:
-  autofix_prs: false
-  skip: []
-
-default_language_version:
-  python: python3.12
+# Pre-commit configuration
+# For details, visit: https://pre-commit.com/hooks.html
 
 repos:
+  # Codespell for spelling corrections
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
       - id: codespell
         args:
-          - --ignore-words-list=ihs,ro,fo,chage,iif
-          - --skip="./.*,*.csv,*.json"
+          - --ignore-words-list=chage,iif,wazuh,sca,regex
+          - --skip="./.*,*.csv,*.json,*.yml,*.yaml"
           - --quiet-level=2
         exclude_types:
           - csv
           - json
 
+  # General pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      # Safety
       - id: detect-private-key
-        exclude: tests/
-
-      # git checks
       - id: check-merge-conflict
+      - id: check-added-large-files
       - id: check-case-conflict
-
-      # General checks
       - id: check-executables-have-shebangs
       - id: trailing-whitespace
         name: Trim Trailing Whitespace
@@ -48,37 +38,41 @@ repos:
         args: [--allow-multiple-documents]
       - id: mixed-line-ending
 
+  # Prettier for code formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.0.3
-          - prettier-plugin-sort-json@3.0.1
+          - prettier@3.2.5
+          - prettier-plugin-sort-json@4.1.1
         exclude_types:
           - python
 
-  # Scan for passwords
+  # Secret detection
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
         args:
-          - --exclude-files=cis_ubuntu24-04.yml
+          - --exclude-files=cis_ubuntu
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.28.0
     hooks:
       - id: gitleaks
 
+  # YAML Linting
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1 # or higher tag
+    rev: v1.37.1
     hooks:
       - id: yamllint
 
-  # DOCKER ---------------------------------------------------------------------
-  - repo: https://github.com/pryorda/dockerfilelint-precommit-hooks
-    rev: v0.1.0
+  # ShellCheck for shell script linting
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
     hooks:
-      - id: dockerfilelint
-        stages: [pre-commit]
+      - id: shellcheck
+        args: [--severity=warning]
+        types: [shell]
+        exclude: ^wazuh-

@@ -1,16 +1,23 @@
 ---
-title: "[Feature Request] "
-labels: ["enhancement"]
+title: "[Discussion] "
 body:
   - type: textarea
-    id: description
+    id: topic
     attributes:
-      label: Description
-      description: A clear and concise description of what you would like to see.
+      label: Topic
+      description: What would you like to discuss?
+      placeholder: I'd like to discuss adding support for Wazuh SCA variables...
     validations:
       required: true
-  - type: textarea
-    id: other
+  - type: dropdown
+    id: category
     attributes:
-      label: Other
-      description: Add any other context or information about the feature request here.
+      label: Category
+      options:
+        - General Usage
+        - Feature Idea
+        - Wazuh SCA Policy
+        - CI/CD
+        - Other
+    validations:
+      required: true

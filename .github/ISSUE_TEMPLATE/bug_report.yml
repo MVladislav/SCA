@@ -1,91 +1,76 @@
 ---
-name: Report an issue
-description: Report an issue.
+name: Bug Report
+description: Report a bug in sca.sh or SCA policy testing
+title: "[Bug] "
+labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        This issue form is for reporting bugs only!
-
-        If you have a feature or enhancement request, please use the feature request issue template
+        Thanks for reporting a bug! Please fill out the form below.
   - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: When running sca.sh with -pdc, the script fails to parse...
     validations:
       required: true
-    attributes:
-      label: Describe the problem
-      description: >-
-        Describe the issue you are experiencing here to communicate to the
-        maintainers. Tell us what you were trying to do and what happened.
-
-        Provide a clear and concise description of what the problem is.
   - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Run `./sca.sh -pdc -f cis_ubuntu24-04.yml`
+        2. Observe error...
     validations:
       required: true
+  - type: textarea
+    id: expected
     attributes:
-      label: Expected behavior
-      description: >-
-        A clear and concise description of what you expected to happen.
-  - type: markdown
-    attributes:
-      value: |
-        ## Environment
-  - type: input
-    id: version
+      label: Expected Behavior
+      description: What you expected to happen.
     validations:
       required: true
+  - type: textarea
+    id: actual
     attributes:
-      label: What is version of application which has the issue?
-      placeholder: core-
-      description: >
-        Can be found in ...
-  - type: input
-    attributes:
-      label: What was the last working version of the application?
-      placeholder: core-
-      description: >
-        If known, otherwise leave blank.
+      label: Actual Behavior
+      description: What actually happened.
+    validations:
+      required: true
   - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: The OS where the bug occurs.
+      options:
+        - Ubuntu 26.04
+        - Ubuntu 24.04
+        - Ubuntu 22.04
+        - Ubuntu 20.04
+        - Debian 12
+        - Other (specify in description)
     validations:
       required: true
+  - type: input
+    id: sca_version
     attributes:
-      label: What type of installation are you running?
-      description: >
-        If you don't know, you can find it in: Configuration panel -> Info.
+      label: SCA Policy Version
+      description: Which CIS benchmark policy file are you using?
+      placeholder: cis_ubuntu24-04.yml (from wazuh/wazuh@master)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log Output
+      description: Paste relevant log output (use -pdc -pao flags for full output).
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
       options:
-        - OS (setup.py)
-        - Container (docker)
-  - type: dropdown
-    validations:
-      required: true
-    attributes:
-      label: What type of device you use to interact with the application?
-      description: >
-        The device where you open the application and the problem pops up.
-      options:
-        - "OS: [e.g. linux, windows, ios]"
-        - "Browser: [e.g. firefox, chrome, safari]"
-        - "Smartphone: [e.g. android, ios]"
-
-  - type: markdown
-    attributes:
-      value: |
-        # Details
-  - type: textarea
-    attributes:
-      label: Example JSON snippet
-      description: |
-        If this issue has an example piece of JSON that can help reproducing this problem, please provide.
-        This can be an piece of JSON from, e.g., a response from the API.
-      render: json
-  - type: textarea
-    attributes:
-      label: Anything in the logs that might be useful for us?
-      description: For example, error message, or stack traces.
-      render: txt
-  - type: textarea
-    attributes:
-      label: Additional information
-      description: >
-        If you have any additional information for us, use the field below.
-        Please note, you can attach screenshots or screen recordings here, by
-        dragging and dropping files in the field below.
+        - label: I have tested with the latest version of sca.sh
+        - label: I have checked existing issues for duplicates
+        - label: I have included all relevant information

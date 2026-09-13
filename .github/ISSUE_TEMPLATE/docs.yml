@@ -1,0 +1,39 @@
+---
+name: Documentation
+description: Report missing, unclear, or incorrect documentation
+title: "[Docs] "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the documentation!
+  - type: textarea
+    id: issue
+    attributes:
+      label: Documentation Issue
+      description: What documentation is missing, unclear, or incorrect?
+      placeholder: The README doesn't explain how to use custom SCA policies...
+    validations:
+      required: true
+  - type: dropdown
+    id: location
+    attributes:
+      label: Location
+      description: Where is the documentation issue?
+      options:
+        - README.md
+        - Inline code comments
+        - --help output
+        - GitHub Wiki
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: Add an example showing how to test a custom policy file...
+    validations:
+      required: true

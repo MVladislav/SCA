@@ -1,38 +1,53 @@
 ---
-name: Feature request
-description: Suggest an idea for this project.
+name: Feature Request
+description: Suggest an enhancement for sca.sh or SCA policy support
+title: "[Feature] "
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        This issue form is for reporting features only!
-
-        If you have a bug or issue request, please use the bug request issue template
+        Thanks for suggesting a feature! Please describe your idea below.
   - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Is it related to a Wazuh SCA feature not yet supported?
+      placeholder: Currently sca.sh doesn't support variable substitution (${var}) in rules...
     validations:
       required: true
-    attributes:
-      label: Is your feature request related to a problem? Please describe.
-      description: >-
-        A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
   - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: Add support for parsing and substituting variables defined in the policy's `variables` section...
     validations:
       required: true
-    attributes:
-      label: Describe the solution you'd like
-      description: >-
-        A clear and concise description of what you want to happen.
   - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this feature relate to?
+      options:
+        - New rule type support (registry, variable, etc.)
+        - Output formatting
+        - Performance improvement
+        - CI/CD integration
+        - Documentation
+        - Other
     validations:
       required: true
+  - type: checkboxes
+    id: checklist
     attributes:
-      label: Describe alternatives you've considered
-      description: >-
-        A clear and concise description of any alternative solutions or features you've considered.
-  - type: textarea
-    validations:
-      required: true
-    attributes:
-      label: Additional context
-      description: >-
-        Add any other context or screenshots about the feature request here.
+      label: Checklist
+      options:
+        - label: This feature aligns with Wazuh SCA specification
+        - label: I have checked existing issues for duplicates
+        - label: I am willing to contribute this feature
